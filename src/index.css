@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset & Brand ─────────────────────────── */
+:root {
+  --velora-burgundy: #781D3B;
+  --velora-pink: #D92F70;
+  --velora-teal: #2C5F6F;
+  --velora-cream: #FFF9FA;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--velora-cream);
+  color: #171313;
+  overflow-x: hidden;
+}
+
+/* ─── Scrollbar Styling ──────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #FCE7EC; }
+::-webkit-scrollbar-thumb {
+  background: var(--velora-pink);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--velora-burgundy); }
+
+/* ─── Utility: Hide scrollbar but keep scroll ───── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Focus Ring (Accessibility) ─────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--velora-pink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

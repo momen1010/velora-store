@@ -36,9 +36,7 @@ const ROUTES = {
   bestSellers: "/shop?filter=best-sellers",
   skincare: "/shop?category=skincare",
   makeup: "/shop?category=makeup",
-  hairCare: "/shop?category=hair-care",
-  fragrances: "/shop?category=fragrances",
-  bundles: "/shop?category=bundles",
+
   offers: "/shop?filter=offers",
   search: "/shop?focus=search",
 };
@@ -47,6 +45,20 @@ const ROUTES = {
    بيانات بطاقات الفئات — كل بطاقة لها رابطها الخاص
    ═══════════════════════════════════════════════════════════ */
 const categories = [
+  {
+  name: "Bags",
+  subtitle: "Carry Your Elegance",
+  image: null,
+  color: "#E8E0D5", // لون بيج فخم
+  to: "/shop?category=bags",
+},
+{
+  name: "Shoes",
+  subtitle: "Step Into Style",
+  image: null,
+  color: "#D5C9C1", // لون رمادي دافئ
+  to: "/shop?category=shoes",
+},
   {
     name: "Skincare",
     subtitle: "Healthy, Glowing Skin",
@@ -61,20 +73,8 @@ const categories = [
     color: "#F6C4D0",
     to: ROUTES.makeup, // ← يذهب لقسم المكياج
   },
-  {
-    name: "Hair Care",
-    subtitle: "Strong & Shiny Hair",
-    image: null,
-    color: "#F8DCCB",
-    to: ROUTES.hairCare, // ← يذهب لقسم العناية بالشعر
-  },
-  {
-    name: "Fragrances",
-    subtitle: "Lasting Impressions",
-    image: null,
-    color: "#F5D0D9",
-    to: ROUTES.fragrances, // ← يذهب لقسم العطور
-  },
+ 
+ 
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -82,10 +82,10 @@ const categories = [
    ═══════════════════════════════════════════════════════════ */
 const NAV_LINKS = [
   { label: "Shop", to: ROUTES.shop, hasDropdown: true },
-  { label: "Best Sellers", to: ROUTES.bestSellers }, // ← فلتر الأكثر مبيعاً
   { label: "Skincare", to: ROUTES.skincare, hasDropdown: true },
   { label: "Makeup", to: ROUTES.makeup, hasDropdown: true },
-  { label: "Bundles", to: ROUTES.bundles },
+  { label: "Bags", to: "/shop?category=bags" },
+  { label: "Shoes", to: "/shop?category=shoes" },
   { label: "Offers", to: ROUTES.offers }, // ← فلتر العروض
 ];
 

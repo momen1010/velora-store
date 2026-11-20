@@ -39,6 +39,16 @@ export default function CartItem({ item }) {
           </div>
         )}
 
+        {shade && isValidHex(shade.hex) && (
+  <div className="flex items-center gap-1.5 mt-1">
+    <span
+      className="w-3.5 h-3.5 rounded-full border border-neutral-200"
+      style={{ backgroundColor: shade.hex }}
+    />
+    <span className="text-xs text-neutral-500">{sanitizeText(shade.name)}</span>
+  </div>
+)}
+
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2 border border-pink-200 rounded-full">
             <button
@@ -58,6 +68,7 @@ export default function CartItem({ item }) {
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
+          
 
           <div className="text-right">
             <p className="text-sm font-semibold text-neutral-800">

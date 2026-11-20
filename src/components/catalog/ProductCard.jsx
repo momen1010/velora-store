@@ -1,127 +1,94 @@
-// src/components/catalog/ProductCard.jsx
-import { useEffect, useRef, useState } from "react";
-import { Check, Heart, ShoppingBag, Sparkles, Star } from "lucide-react";
-import ShadeSwatches from "./ShadeSwatches";
-import { L, formatPrice, getDiscount } from "./catalogConfig";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Heart, ShoppingBag } from "lucide-react";
+import { formatPrice } from "./catalogConfig";
 
-export default function ProductCard({
-  product,
-  cartQty = 0,
-  isWishlisted = false,
-  currency,
-  onAddToCart,
-  onToggleWishlist,
-  onOpen,
-}) {
-  const { name, brand, price, oldPrice, rating, reviews, badge, image, shades = [] } = product;
-  const [shadeIdx, setShadeIdx] = useState(0);
-  const [previewIdx, setPreviewIdx] = useState(null);
-  const [added, setAdded] = useState(false);
-  const [imgFailed, setImgFailed] = useState(false);
-  const timer = useRef(null);
-  useEffect(() => () => clearTimeout(timer.current), []);
+export default function ProductCard({ product, onAddToCart, onToggleWishlist, isWishlisted, cartQty }) {
+  const [selectedSize, setSelectedSize] = useState(null);
 
-  const selectedShade = shades[shadeIdx] ?? null;
-  const shownShade = shades[previewIdx ?? shadeIdx] ?? null;
-  const discount = getDiscount(product);
-
-  const handleAdd = () => {
-    onAddToCart?.(product, selectedShade); // (product, shade|null)
-    setAdded(true);
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => setAdded(false), 1600);
+  const handleAddToCart = (e) => {
+    e.preventDefault(); // منع فتح الرابط
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      alert("الرجاء اختيار المقاس أولاً");
+      return;
+    }
+    // بنبعت المنتج، الكمية (1)، اللون (لو موجود)، المقاس
+    onAddToCart(product, 1, product.shades?.[0] || null, selectedSize);
   };
 
   return (
-    <article className="group flex flex-col">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#FBE4EA]">
-        {image && !imgFailed ? (
+    <div className="group relative flex flex-col rounded-2xl bg-white p-3 shadow-sm transition hover:shadow-md border border-gray-100">
+      
+      {/* الصورة والزراير فوقها */}
+      <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#FCE7EC]">
+        <Link to={`/product/${product.id}`}>
           <img
-            src={image}
-            alt={`${brand} ${name}`}
+            src={product.image || "/placeholder.png"}
+            alt={product.name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             loading="lazy"
-            onError={() => setImgFailed(true)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
           />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center transition-colors duration-300"
-            style={{ background: `linear-gradient(160deg, #FFF1F4 0%, ${shownShade?.hex ?? "#F7CFD9"} 100%)` }}
+        </Link>
+        
+        {/* زر المفضلة */}
+        <button
+          onClick={(e) => { e.preventDefault(); onToggleWishlist(product); }}
+          className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur transition hover:bg-white"
+        >
+          <Heart className={`h-4 w-4 ${isWishlisted ? "fill-velora-pink text-velora-pink" : "text-gray-500"}`} />
+        </button>
+
+        {/* شارة الخصم */}
+        {product.discount && (
+          <span className="absolute top-2 left-2 rounded-full bg-velora-pink px-2 py-1 text-xs font-bold text-white">
+            {product.discount}%-
+          </span>
+        )}
+      </div>
+
+      {/* التفاصيل */}
+      <div className="mt-3 flex flex-1 flex-col">
+        <p className="text-xs text-gray-500">{product.brand}</p>
+        <Link to={`/product/${product.id}`} className="text-sm font-semibold text-gray-800 hover:text-velora-pink line-clamp-1">
+          {product.name}
+        </Link>
+
+        {/* 🔴 أزرار المقاسات */}
+        {product.sizes && product.sizes.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {product.sizes.map((size) => (
+              <button
+                key={size}
+                onClick={(e) => { e.preventDefault(); setSelectedSize(size); }}
+                className={`rounded-md border px-2 py-0.5 text-xs transition ${
+                  selectedSize === size
+                    ? "border-[#4A2C3A] bg-[#4A2C3A] text-white"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-[#4A2C3A]"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* السعر والزرار */}
+        <div className="mt-auto flex items-center justify-between pt-3">
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-velora-pink">{formatPrice(product.price)}</span>
+            {product.oldPrice && (
+              <span className="text-xs text-gray-400 line-through">{formatPrice(product.oldPrice)}</span>
+            )}
+          </div>
+          <button
+            onClick={handleAddToCart}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4A2C3A] text-white transition hover:bg-velora-pink"
+            aria-label="أضف للسلة"
           >
-            <Sparkles className="h-8 w-8 text-white/80" aria-hidden="true" />
-          </div>
-        )}
-
-        {onOpen && (
-          <button type="button" onClick={() => onOpen(product)} aria-label={`${brand} ${name}`} className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C2557A]" />
-        )}
-
-        {discount ? (
-          <span className="absolute start-2 top-2 rounded-full bg-[#C2557A] px-2 py-0.5 text-xs font-bold text-white">
-            -{discount}%
-          </span>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={() => onToggleWishlist?.(product.id)}
-          aria-pressed={isWishlisted}
-          aria-label={isWishlisted ? L.removeFromWishlist : L.addToWishlist}
-          className="absolute end-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#4A2C3A] outline-none transition-colors hover:bg-white focus-visible:ring-2 focus-visible:ring-[#C2557A]"
-        >
-          <Heart className={`h-[18px] w-[18px] ${isWishlisted ? "fill-[#C2557A] text-[#C2557A]" : ""}`} />
-        </button>
-
-        {badge && (
-          <span className="absolute bottom-2 start-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-[#4A2C3A]">
-            {badge}
-          </span>
-        )}
-
-        <button
-          type="button"
-          onClick={handleAdd}
-          aria-label={`${L.addToCart}: ${name}${selectedShade ? ` - ${selectedShade.name}` : ""}`}
-          className={`absolute bottom-2 end-2 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#C2557A] focus-visible:ring-offset-2 ${
-            added ? "bg-[#C2557A]" : "bg-[#4A2C3A] hover:bg-[#C2557A]"
-          }`}
-        >
-          {added ? <Check className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
-          {cartQty > 0 && !added && (
-            <span className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C2557A] px-1 text-[10px] font-bold text-white" aria-label={L.inCart(cartQty)}>
-              {cartQty}
-            </span>
-          )}
-        </button>
-        <span className="sr-only" role="status">{added ? L.addedToCart : ""}</span>
-      </div>
-
-      <div className="flex flex-1 flex-col gap-1.5 pt-3">
-        <p className="text-xs text-[#8C6F7B]">{brand}</p>
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-5 text-[#4A2C3A]">{name}</h3>
-
-        {shades.length > 0 && (
-          <div>
-            <ShadeSwatches shades={shades} selectedIndex={shadeIdx} onSelect={setShadeIdx} onPreview={setPreviewIdx} />
-            <p className="mt-0.5 truncate text-xs text-[#8C6F7B]">
-              {L.shade}: {shownShade?.name}
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center gap-1 text-xs text-[#8C6F7B]">
-          <Star className="h-3.5 w-3.5 fill-[#E9A23B] text-[#E9A23B]" aria-hidden="true" />
-          <span className="font-medium text-[#4A2C3A]">{rating.toFixed(1)}</span>
-          <span>({reviews.toLocaleString("ar-EG")} {L.reviews})</span>
-        </div>
-
-        <div className="mt-auto flex items-baseline gap-2 pt-0.5">
-          <span className="text-base font-bold text-[#C2557A]">{formatPrice(price, currency)}</span>
-          {oldPrice && oldPrice > price && (
-            <span className="text-xs text-[#8C6F7B] line-through">{formatPrice(oldPrice, currency)}</span>
-          )}
+            <ShoppingBag className="h-4 w-4" />
+          </button>
         </div>
       </div>
-    </article>
+    </div>
   );
 }

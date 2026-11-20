@@ -26,7 +26,8 @@ function reducer(state, action) {
       return { ...state, ...action.payload };
     }
     case 'ADD_TO_CART': {
-      const { product, quantity = 1, shade = null } = action.payload;
+      
+      const { product, quantity = 1, shade = null, size = null } = action.payload;
       if (!isValidProduct(product)) return state;
 
       const qty = sanitizeNumber(quantity, { min: 1, max: MAX_QTY_PER_ITEM, fallback: 1 });
@@ -34,7 +35,7 @@ function reducer(state, action) {
         ? { name: sanitizeText(shade.name), hex: shade.hex }
         : null;
 
-      const key = `${product.id}::${safeShade?.hex ?? ''}`;
+      const key = `${product.id}::${shade?.hex ?? ''}::${size ?? ''}`;
       const existing = state.cart.find(
         (i) => `${i.product.id}::${i.shade?.hex ?? ''}` === key
       );

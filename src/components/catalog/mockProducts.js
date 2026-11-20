@@ -17,6 +17,10 @@ export const mockProducts = [
     image: "/images/Hydra Dew Gel Moisturizer.jpg",
     shades: [],
     sizes: [],
+    // ✅ البيانات الجديدة
+    description: "جل مرطب خفيف الملمس يمنح بشرتك ترطيباً عميقاً يدوم طوال اليوم دون انسداد المسام.",
+    ingredients: "Water, Glycerin, Hyaluronic Acid, Niacinamide, Panthenol, Aloe Vera Extract.",
+    usage: "يوضع على بشرة نظيفة صباحاً ومساءً مع التدليك بلطف حتى الامتصاص.",
   },
   {
     id: "2",
@@ -33,6 +37,10 @@ export const mockProducts = [
     image: "/images/Ceramide Barrier Repair Cream.webp",
     shades: [],
     sizes: [],
+    // ✅ البيانات الجديدة
+    description: "كريم غني بالسيراميد يعيد بناء حاجز البشرة الواقي ويحميها من الجفاف والتهيج.",
+    ingredients: "Ceramide NP, Squalane, Shea Butter, Cholesterol, Fatty Acids.",
+    usage: "يُستخدم كخطوة أخيرة في الروتين اليومي، يُوزع بلطف على الوجه والرقبة.",
   },
   {
     id: "3",
@@ -49,6 +57,10 @@ export const mockProducts = [
     image: "/images/VITEMEN C.webp",
     shades: [],
     sizes: [],
+    // ✅ البيانات الجديدة
+    description: "سيروم مركز بفيتامين C النقي يوحّد لون البشرة ويمنحها إشراقة فورية.",
+    ingredients: "15% Vitamin C, Vitamin E, Ferulic Acid, Hyaluronic Acid.",
+    usage: "ضعي 3-4 قطرات على الوجه صباحاً قبل واقي الشمس.",
   },
   {
     id: "4",
@@ -67,17 +79,19 @@ export const mockProducts = [
       { name: "Rose Petal", hex: "#D16A7A" },
       { name: "Nude Pink", hex: "#E4A4A4" },
     ],
-        
-   
     sizes: [],
+    // ✅ البيانات الجديدة
+    description: "أحمر شفاه مطفي بلمسة نهائية مخملية، يوفر تغطية كاملة تدوم لساعات.",
+    ingredients: "Dimethicone, Trimethylsiloxysilicate, Silica, Vitamin E.",
+    usage: "يُطبق مباشرة على الشفاه، يمكن استخدامه بمفرده أو فوق محدد الشفاه.",
   },
   {
- id: "5",
-    name: "Cream Eyeshadow ",
+    id: "5",
+    name: "Cream Eyeshadow",
     brand: "VELORA",
     category: "makeup",
     skinType: ["all"],
-    price: 320,
+    price: 390,
     oldPrice: 400,
     discount: 20,
     rating: 4.9,
@@ -87,8 +101,13 @@ export const mockProducts = [
     shades: [
       { name: "Rose Petal", hex: "#D16A7A" },
       { name: "Nude Pink", hex: "#E4A4A4" },
-       {name: "gold",hex: "#e4e2a4"   },
+      { name: "gold", hex: "#e4e2a4" },
     ],
+    sizes: [],
+    // ✅ البيانات الجديدة
+    description: "ظلال عيون كريمية قابلة للدمج بسهولة، تمنح إشراقة فورية للعين.",
+    ingredients: "Mica, Talc, Dimethicone, Caprylic/Capric Triglyceride.",
+    usage: "يوضع بواسطة الأصابع أو فرشاة مسطحة على الجفن المتحرك.",
   },
 
   // ═══════════════════════════════════════════════════════════

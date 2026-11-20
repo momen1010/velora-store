@@ -1,14 +1,14 @@
+// src/pages/ProductPage.jsx
 import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Heart, ShoppingBag, ChevronLeft } from "lucide-react";
 import { mockProducts } from "../components/catalog/mockProducts";
-import { useCart } from "../context/CartContext"; // أو useStore
+import { useCart } from "../context/CartContext"; // أو useStore حسب مشروعك
 import { formatPrice } from "../components/catalog/catalogConfig";
 
 export default function ProductPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist } = useCart(); // تعديل حسب الـ Context اللي عندك
+  const { addToCart, wishlist = [], toggleWishlist } = useCart();
 
   const product = mockProducts.find((p) => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
@@ -23,14 +23,14 @@ export default function ProductPage() {
     );
   }
 
-  const isWishlisted = Array.isArray(wishlist) && (wishlist.includes(product.id) || wishlist.some(w => w.id === product.id));
+  const isWishlisted = Array.isArray(wishlist) && (wishlist.includes(product.id) || wishlist.some(w => w?.id === product.id));
 
   const handleAddToCart = () => {
     if (product.sizes && product.sizes.length > 0 && !selectedSize) {
       alert("الرجاء اختيار المقاس أولاً");
       return;
     }
-    addToCart(product, quantity, product.shades?.[0] || null, selectedSize);
+    addToCart(product, quantity, null, selectedSize);
   };
 
   return (
@@ -40,7 +40,7 @@ export default function ProductPage() {
         <Link to="/" className="hover:text-velora-pink">الرئيسية</Link>
         <ChevronLeft className="h-4 w-4" />
         <Link to={`/shop?category=${product.category}`} className="hover:text-velora-pink">
-          {product.category === "bags" ? "الشنط" : product.category === "shoes" ? "الشوزات" : product.category}
+          {product.category === "bags" ? "الشنط" : product.category === "shoes" ? "الشوزات" : product.category === "makeup" ? "المكياج" : "العناية بالبشرة"}
         </Link>
         <ChevronLeft className="h-4 w-4" />
         <span className="font-semibold text-gray-800">{product.name}</span>
@@ -69,11 +69,13 @@ export default function ProductPage() {
             )}
           </div>
 
-          <p className="mt-2 text-sm text-gray-500">
-            مناسب لـ: {product.skinType.includes("all") ? "جميع الأنواع" : product.skinType.join(", ")}
-          </p>
+          {product.skinType && (
+             <p className="mt-2 text-sm text-gray-500">
+               مناسب لـ: {product.skinType.includes("all") ? "جميع الأنواع" : product.skinType.join(", ")}
+             </p>
+          )}
 
-          {/* 🔴 المقاسات */}
+          {/* المقاسات */}
           {product.sizes && product.sizes.length > 0 && (
             <div className="mt-6">
               <h3 className="mb-3 text-sm font-semibold text-gray-800">اختر المقاس:</h3>
@@ -120,6 +122,49 @@ export default function ProductPage() {
               <Heart className={`h-5 w-5 ${isWishlisted ? "fill-velora-pink" : ""}`} />
             </button>
           </div>
+
+          {/* 🟢 قسم الوصف والمكونات وطريقة الاستخدام */}
+          <div className="mt-10 border-t border-gray-200 pt-6">
+            {/* الوصف */}
+            <details className="group border-b border-gray-100 py-4" open>
+              <summary className="flex cursor-pointer items-center justify-between font-semibold text-gray-800">
+                <span>الوصف</span>
+                <span className="transition group-open:rotate-180">
+                  <ChevronLeft className="h-5 w-5 -rotate-90" />
+                </span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                {product.description || "لا يوجد وصف متاح لهذا المنتج."}
+              </p>
+            </details>
+
+            {/* المكونات */}
+            <details className="group border-b border-gray-100 py-4">
+              <summary className="flex cursor-pointer items-center justify-between font-semibold text-gray-800">
+                <span>المكونات</span>
+                <span className="transition group-open:rotate-180">
+                  <ChevronLeft className="h-5 w-5 -rotate-90" />
+                </span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                {product.ingredients || "لا توجد مكونات مسجلة."}
+              </p>
+            </details>
+
+            {/* طريقة الاستخدام */}
+            <details className="group border-b border-gray-100 py-4">
+              <summary className="flex cursor-pointer items-center justify-between font-semibold text-gray-800">
+                <span>طريقة الاستخدام</span>
+                <span className="transition group-open:rotate-180">
+                  <ChevronLeft className="h-5 w-5 -rotate-90" />
+                </span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                {product.usage || "لم يتم إضافة طريقة استخدام."}
+              </p>
+            </details>
+          </div>
+
         </div>
       </div>
     </div>

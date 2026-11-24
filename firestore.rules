@@ -1,0 +1,96 @@
+rules_version = '2';
+
+// قواعد أمان Firestore لمتجر velora.
+// المبدأ: الزائر يقدر ينشئ طلباً صالحاً فقط. لا قراءة ولا تعديل ولا حذف من الزوار.
+// القراءة والإدارة للأدمن فقط (مستخدم عليه custom claim: admin == true).
+// أي مجموعة أخرى مغلقة تماماً.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isStr(v, minLen, maxLen) {
+      return v is string && v.size() >= minLen && v.size() <= maxLen;
+    }
+
+    // فحص خفيف لكل صنف (قواعد Firestore لها حد 1000 تعبير للطلب الواحد).
+    // الحقول الاختيارية (brand, image, shade) تُقيَّد بالمفاتيح فقط؛ الواجهة تنظّفها،
+    // وأي عرض لها لاحقاً يجب أن يمر عبر React (يهرّب النص تلقائياً).
+    function validItem(i) {
+      return i.keys().hasOnly(['cartItemId', 'id', 'name', 'brand', 'image', 'price', 'shade', 'quantity'])
+        && i.cartItemId is string && i.cartItemId.size() <= 100
+        && (i.id is string || i.id is int)
+        && i.name is string && i.name.size() >= 1 && i.name.size() <= 200
+        && i.price is number && i.price >= 0 && i.price <= 100000
+        && i.quantity is int && i.quantity >= 1 && i.quantity <= 10;
+    }
+
+    // لا توجد حلقات في القواعد، فنفحص حتى 5 أصناف (نفس MAX_CART_LINES في الكود)
+    function validItemAt(items, idx) {
+      return items.size() <= idx || validItem(items[idx]);
+    }
+
+    function lineTotal(items, idx) {
+      return items.size() > idx ? items[idx].price * items[idx].quantity : 0;
+    }
+
+    function validCustomer(c) {
+      return c is map
+        && c.keys().hasOnly(['name', 'phone', 'governorate', 'city', 'address', 'notes'])
+        && c.keys().hasAll(['name', 'phone', 'governorate', 'city', 'address'])
+        && isStr(c.name, 3, 200)
+        && isStr(c.phone, 11, 11)
+        && c.phone.matches('^01[0125][0-9]{8}$')
+        && c.governorate in [
+          'القاهرة', 'الجيزة', 'الإسكندرية', 'القليوبية', 'الشرقية', 'الدقهلية', 'البحيرة', 'المنوفية', 'الغربية',
+          'كفر الشيخ', 'دمياط', 'بورسعيد', 'الإسماعيلية', 'السويس', 'شمال سيناء', 'جنوب سيناء', 'الفيوم',
+          'بني سويف', 'المنيا', 'أسيوط', 'سوهاج', 'قنا', 'الأقصر', 'أسوان', 'البحر الأحمر', 'الوادي الجديد', 'مطروح'
+        ]
+        && isStr(c.city, 2, 200)
+        && isStr(c.address, 8, 200)
+        && (!('notes' in c) || isStr(c.notes, 0, 500));
+    }
+
+    function validNewOrder(orderId, d) {
+      return d.keys().hasOnly(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt'])
+        && d.keys().hasAll(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt'])
+        && orderId.matches('^GLW-[0-9A-Z]{10}$')
+        && d.paymentMethod == 'cod'
+        && d.status == 'pending'
+        && d.createdAt == request.time
+        && validCustomer(d.customer)
+        && d.items is list && d.items.size() >= 1 && d.items.size() <= 5
+        && validItemAt(d.items, 0)
+        && validItemAt(d.items, 1)
+        && validItemAt(d.items, 2)
+        && validItemAt(d.items, 3)
+        && validItemAt(d.items, 4)
+        // الإجماليات لازم تطابق الأصناف (فرق أقل من قرش للتقريب)
+        && (d.subtotal is int || d.subtotal is float)
+        && (d.shipping is int || d.shipping is float)
+        && (d.total is int || d.total is float)
+        && math.abs(d.subtotal - (lineTotal(d.items, 0) + lineTotal(d.items, 1) + lineTotal(d.items, 2) + lineTotal(d.items, 3) + lineTotal(d.items, 4))) < 0.01
+        && ((d.subtotal >= 799 && d.shipping == 0) || (d.subtotal < 799 && d.shipping == 50))
+        && math.abs(d.total - (d.subtotal + d.shipping)) < 0.01;
+    }
+
+    match /orders/{orderId} {
+      // الزائر: إنشاء طلب صالح فقط. ممنوع get/list/update/delete.
+      allow create: if validNewOrder(orderId, request.resource.data);
+
+      // الأدمن: قراءة، وتغيير حالة الطلب فقط (لا تعديل على بيانات العميل أو الأسعار).
+      allow get, list: if isAdmin();
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+      allow delete: if false;
+    }
+
+    // أي شيء آخر مغلق
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

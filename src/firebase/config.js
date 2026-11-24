@@ -1,33 +1,47 @@
+// src/firebase/config.js
+// إعدادات Firebase تُقرأ من متغيرات البيئة (VITE_*) ولا تُكتب في الكود.
+// ملاحظة: مفتاح apiKey الخاص بتطبيقات الويب ليس سرّاً؛ الحماية الحقيقية
+// تأتي من firestore.rules ومن App Check. راجع README.
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAnalytics, isSupported } from "firebase/analytics";
+
+const env = import.meta.env;
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-
-// Authentication
-export const auth = getAuth(app);
-
-// Database
-export const db = getFirestore(app);
-
-// File Storage
-export const storage = getStorage(app);
-
-// Analytics
-export const analyticsPromise = isSupported().then((supported) =>
-  supported ? getAnalytics(app) : null
+export const isFirebaseConfigured = Boolean(
+  firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId
 );
 
-export default app;
+let app = null;
+let db = null;
+
+if (isFirebaseConfigured) {
+  app = initializeApp(firebaseConfig);
+
+  // App Check (reCAPTCHA v3): يمنع الطلبات القادمة من خارج موقعك. يتفعّل فقط
+  // لو أضفت VITE_RECAPTCHA_SITE_KEY. لا يوجد مفتاح سرّي في الكود.
+  const siteKey = env.VITE_RECAPTCHA_SITE_KEY;
+  if (siteKey) {
+    import("firebase/app-check").then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+      if (env.DEV && env.VITE_APPCHECK_DEBUG_TOKEN) {
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = env.VITE_APPCHECK_DEBUG_TOKEN;
+      }
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    });
+  }
+
+  db = getFirestore(app);
+}
+
+export { app, db };

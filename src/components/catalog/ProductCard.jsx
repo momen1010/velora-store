@@ -23,10 +23,11 @@ export default function ProductCard({ product, onAddToCart, onToggleWishlist, is
       <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#FCE7EC]">
         <Link to={`/product/${product.id}`}>
           <img
-            src={product.image || "/placeholder.png"}
+            src={product.image || "/placeholder.svg"}
             alt={product.name}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             loading="lazy"
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/placeholder.svg"; }}
           />
         </Link>
         

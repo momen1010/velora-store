@@ -62,14 +62,14 @@ const categories = [
   {
     name: "Skincare",
     subtitle: "Healthy, Glowing Skin",
-    image: "/images/products/hydra-dew.svg",
+    image: "/images/hydra-dew-gel-moisturizer.jpg",
     color: "#F7D4DC",
     to: ROUTES.skincare, // ← يذهب لقسم العناية بالبشرة
   },
   {
     name: "Makeup",
     subtitle: "Express Your Style",
-    image: "/images/products/velvet-lip.svg",
+    image: "/images/velvet-matte-lip-cream.jpg",
     color: "#F6C4D0",
     to: ROUTES.makeup, // ← يذهب لقسم المكياج
   },

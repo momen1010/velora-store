@@ -113,7 +113,7 @@ export default function CheckoutPage() {
       clearCart();
     } catch (err) {
       console.error("[checkout]", err);
-      setSubmitError("تعذّر إتمام الطلب. تأكد من اتصالك وحاول مرة أخرى.");
+      setSubmitError(err?.userMessage || "تعذّر إتمام الطلب. تأكد من اتصالك وحاول مرة أخرى.");
       setSubmitting(false);
     }
   };

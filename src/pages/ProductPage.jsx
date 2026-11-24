@@ -49,7 +49,7 @@ export default function ProductPage() {
       <div className="grid gap-10 md:grid-cols-2">
         {/* صورة المنتج */}
         <div className="overflow-hidden rounded-3xl bg-[#FCE7EC]">
-          <img src={product.image} alt={product.name} className="h-full w-full object-cover aspect-square" />
+          <img src={product.image || "/placeholder.svg"} alt={product.name} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/placeholder.svg"; }} className="h-full w-full object-cover aspect-square" />
         </div>
 
         {/* التفاصيل */}

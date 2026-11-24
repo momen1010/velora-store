@@ -9,7 +9,6 @@ import {
 } from "react-router-dom";
 
 import useDocumentTitle from "./utils/useDocumentTitle";
-import WhatsAppButton from "./components/layout/WhatsAppButton";
 import { CartProvider, useCart } from "./context/CartContext";
 import CartDrawer from "./components/cart/CartDrawer";
 import PageShell from "./components/layout/PageShell";
@@ -102,7 +101,6 @@ export default function App() {
         </Routes>
 
         <GlobalCartDrawer />
-        <WhatsAppButton />
       </CartProvider>
     </BrowserRouter>
   );

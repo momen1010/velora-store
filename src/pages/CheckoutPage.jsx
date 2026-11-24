@@ -1,12 +1,13 @@
 // src/pages/CheckoutPage.jsx  →  المسار: /checkout
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Banknote, CreditCard, Loader2, Smartphone, Sparkles } from "lucide-react";
+import { Banknote, Check, CreditCard, Globe, Loader2, MessageCircle, Smartphone, Sparkles } from "lucide-react";
 import PageShell from "../components/layout/PageShell";
 import { formatPrice } from "../components/catalog/catalogConfig";
 import { useCart } from "../context/CartContext";
 import { createOrder } from "../services/orderService";
-import { WALLET_NUMBER, WALLET_NAME } from "../config/store";
+import { WALLET_NUMBER, WALLET_NAME, WHATSAPP_NUMBER } from "../config/store";
+import { buildOrderMessage, whatsappLink } from "../utils/whatsapp";
 
 const GOVERNORATES = [
   "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية", "الدقهلية", "البحيرة", "المنوفية", "الغربية",
@@ -62,6 +63,10 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [method, setMethod] = useState("cod");
   const [copied, setCopied] = useState(false);
+  // طريقة إرسال الطلب: "site" (على الموقع) أو "whatsapp" (رسالة جاهزة لواتساب المتجر)
+  const [mode, setMode] = useState("site");
+  const [waLink, setWaLink] = useState("");
+  const isWa = mode === "whatsapp" && Boolean(WHATSAPP_NUMBER);
   const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
@@ -90,11 +95,35 @@ export default function CheckoutPage() {
     if (submitting) return; // يمنع الإرسال المزدوج
     setSubmitted(true);
 
-    const errs = validate(form, method);
+    const errs = validate(form, isWa ? "cod" : method);
     setErrors(errs);
     const firstKey = Object.keys(errs)[0];
     if (firstKey) {
       document.getElementById(`f-${firstKey}`)?.focus();
+      return;
+    }
+
+    if (isWa) {
+      // مسار واتساب: نجهّز الرسالة من بيانات الفورم والسلة ونفتح واتساب. لا نحفظ طلب في قاعدة البيانات.
+      const link = whatsappLink(
+        buildOrderMessage({
+          paymentMethod: "chat",
+          customer: {
+            name: form.name.trim(),
+            phone: normalizePhone(form.phone),
+            governorate: form.governorate,
+            city: form.city.trim(),
+            address: form.address.trim(),
+            notes: form.notes.trim(),
+          },
+          items: cart,
+          subtotal,
+          shipping,
+          total,
+        })
+      );
+      setWaLink(link);
+      window.open(link, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -143,6 +172,48 @@ export default function CheckoutPage() {
 
       <form onSubmit={handleSubmit} noValidate className="grid gap-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-8">
+          {/* طريقة إرسال الطلب */}
+          {WHATSAPP_NUMBER && (
+            <section aria-labelledby="mode-title" className="rounded-3xl border border-[#F3D5DD] bg-white p-5 md:p-6">
+              <h2 id="mode-title" className="mb-1 text-lg font-bold">كيف تحب تكمّل طلبك؟</h2>
+              <p className="mb-4 text-sm text-[#8C6F7B]">اختار الأنسب لك، وفي الحالتين بياناتك نفسها.</p>
+              <div role="radiogroup" aria-labelledby="mode-title" className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { id: "site", icon: Globe, title: "أكمل الطلب على الموقع", desc: "تأكيد فوري ورقم طلب، مع الدفع عند الاستلام أو تحويل.", tone: "#C2557A" },
+                  { id: "whatsapp", icon: MessageCircle, title: "أرسل الطلب عبر واتساب", desc: "رسالة جاهزة بكل تفاصيل طلبك، وهنرد عليك ونأكد معاك.", tone: "#1FAF5A" },
+                ].map(({ id, icon: Icon, title, desc, tone }) => {
+                  const active = mode === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => { setMode(id); setWaLink(""); setSubmitError(""); }}
+                      className="relative flex items-start gap-3 rounded-2xl border-2 p-4 text-start outline-none transition focus-visible:ring-2 focus-visible:ring-offset-2"
+                      style={{ borderColor: active ? tone : "#F3D5DD", background: active ? `${tone}12` : "#fff", "--tw-ring-color": tone }}
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white" style={{ background: tone }}>
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <span className="flex-1">
+                        <span className="block font-bold">{title}</span>
+                        <span className="mt-0.5 block text-xs leading-5 text-[#8C6F7B]">{desc}</span>
+                      </span>
+                      <span
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2"
+                        style={{ borderColor: active ? tone : "#E5C9D1", background: active ? tone : "transparent" }}
+                        aria-hidden="true"
+                      >
+                        {active && <Check className="h-3 w-3 text-white" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* بيانات التوصيل */}
           <section aria-labelledby="shipping-title" className="rounded-3xl border border-[#F3D5DD] bg-white p-5 md:p-6">
             <h2 id="shipping-title" className="mb-5 text-lg font-bold">بيانات التوصيل</h2>
@@ -180,6 +251,7 @@ export default function CheckoutPage() {
           </section>
 
           {/* طريقة الدفع */}
+          {!isWa && (
           <fieldset className="rounded-3xl border border-[#F3D5DD] bg-white p-5 md:p-6">
             <legend className="px-2 text-lg font-bold">طريقة الدفع</legend>
             <div className="mt-2 space-y-3">
@@ -233,6 +305,7 @@ export default function CheckoutPage() {
               </label>
             </div>
           </fieldset>
+          )}
         </div>
 
         {/* ملخص الطلب */}
@@ -271,11 +344,37 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#C2557A] text-sm font-bold text-white outline-none transition-colors hover:bg-[#A94467] focus-visible:ring-2 focus-visible:ring-[#C2557A] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+            className={`mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${
+              isWa ? "bg-[#1FAF5A] hover:bg-[#188A47] focus-visible:ring-[#1FAF5A]" : "bg-[#C2557A] hover:bg-[#A94467] focus-visible:ring-[#C2557A]"
+            }`}
           >
-            {submitting ? (<><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />جارٍ تأكيد الطلب...</>) : `تأكيد الطلب · ${formatPrice(total)}`}
+            {isWa ? (
+              <><MessageCircle className="h-5 w-5" aria-hidden="true" />أرسل الطلب عبر واتساب · {formatPrice(total)}</>
+            ) : submitting ? (
+              <><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />جارٍ تأكيد الطلب...</>
+            ) : (
+              `تأكيد الطلب · ${formatPrice(total)}`
+            )}
           </button>
-          <p className="mt-3 text-center text-xs text-[#8C6F7B]">{method === "wallet" ? `حوّل ${formatPrice(total)} على المحفظة وهنأكد الطلب بعد وصول التحويل` : `بتأكيد الطلب ستدفع ${formatPrice(total)} نقداً عند الاستلام`}</p>
+          <p className="mt-3 text-center text-xs text-[#8C6F7B]">
+            {isWa
+              ? "هنفتحلك واتساب برسالة جاهزة بتفاصيل طلبك، اضغط إرسال وهنرد عليك ونأكد معاك الدفع والتوصيل."
+              : method === "wallet"
+                ? `حوّل ${formatPrice(total)} على المحفظة وهنأكد الطلب بعد وصول التحويل`
+                : `بتأكيد الطلب ستدفع ${formatPrice(total)} نقداً عند الاستلام`}
+          </p>
+          {isWa && waLink && (
+            <div role="status" className="mt-4 rounded-2xl border border-[#BFE8CF] bg-[#F1FBF5] p-4 text-center text-sm text-[#4A2C3A]">
+              <p className="font-bold">الرسالة جاهزة على واتساب</p>
+              <p className="mt-1 text-xs leading-5 text-[#8C6F7B]">لو واتساب ماتفتحش، اضغط هنا. وبعد ما تبعت الطلب تقدر تفرّغ السلة.</p>
+              <a href={waLink} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-[#1FAF5A] px-5 text-xs font-bold text-white hover:bg-[#188A47]">
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />افتح واتساب
+              </a>
+              <button type="button" onClick={() => { clearCart(); navigate("/"); }} className="mt-3 block w-full text-xs text-[#8C6F7B] underline hover:text-[#C2557A]">
+                أرسلت الطلب، فرّغ السلة
+              </button>
+            </div>
+          )}
           <Link to="/" className="mt-3 block text-center text-sm text-[#8C6F7B] hover:text-[#C2557A]">متابعة التسوق</Link>
         </aside>
       </form>

@@ -8,7 +8,7 @@ export function buildOrderMessage(order, { walletNumber = "", walletName = "" } 
   const c = order.customer;
   const lines = [
     `طلب جديد من موقع Velora`,
-    `رقم الطلب: ${order.id}`,
+    ...(order.id ? [`رقم الطلب: ${order.id}`] : []),
     "",
     "المنتجات:",
     ...order.items.map(
@@ -21,7 +21,9 @@ export function buildOrderMessage(order, { walletNumber = "", walletName = "" } 
     "",
     order.paymentMethod === "wallet"
       ? `الدفع: تحويل على ${walletName} ${walletNumber} (من رقم ${order.walletSender})`
-      : "الدفع: عند الاستلام",
+      : order.paymentMethod === "chat"
+        ? "الدفع: نتفق عليه هنا (عند الاستلام أو تحويل)"
+        : "الدفع: عند الاستلام",
     "",
     `الاسم: ${c.name}`,
     `الموبايل: ${c.phone}`,

@@ -8,6 +8,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import useDocumentTitle from "./utils/useDocumentTitle";
+import WhatsAppButton from "./components/layout/WhatsAppButton";
 import { CartProvider, useCart } from "./context/CartContext";
 import CartDrawer from "./components/cart/CartDrawer";
 import PageShell from "./components/layout/PageShell";
@@ -64,6 +66,7 @@ function GlobalCartDrawer() {
 }
 
 function NotFound() {
+  useDocumentTitle("الصفحة غير موجودة | Velora");
   return (
     <PageShell>
       <div className="flex flex-col items-center gap-4 py-20 text-center">
@@ -99,6 +102,7 @@ export default function App() {
         </Routes>
 
         <GlobalCartDrawer />
+        <WhatsAppButton />
       </CartProvider>
     </BrowserRouter>
   );

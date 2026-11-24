@@ -7,7 +7,10 @@ import ProductGrid from "../components/catalog/ProductGrid";
 import { mockProducts } from "../components/catalog/mockProducts";
 import { useCart } from "../context/CartContext";
 
+import useDocumentTitle from "../utils/useDocumentTitle";
+
 export default function WishlistPage() {
+  useDocumentTitle("المفضلة | Velora");
   const navigate = useNavigate();
   const { cart, wishlist, addToCart, toggleWishlist } = useCart();
 

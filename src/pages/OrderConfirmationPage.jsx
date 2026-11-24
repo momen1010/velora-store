@@ -6,7 +6,10 @@ import PageShell from "../components/layout/PageShell";
 import { formatPrice } from "../components/catalog/catalogConfig";
 import { getOrderById } from "../services/orderService";
 
+import useDocumentTitle from "../utils/useDocumentTitle";
+
 export default function OrderConfirmationPage() {
+  useDocumentTitle("تم استلام طلبك | Velora");
   const { orderId } = useParams();
   const order = useMemo(() => getOrderById(orderId), [orderId]);
 

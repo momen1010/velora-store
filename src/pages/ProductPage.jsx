@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Heart, ShoppingBag, ChevronLeft } from "lucide-react";
 import { mockProducts } from "../components/catalog/mockProducts";
+import useDocumentTitle from "../utils/useDocumentTitle";
 import { useCart } from "../context/CartContext"; // أو useStore حسب مشروعك
 import { formatPrice } from "../components/catalog/catalogConfig";
 
@@ -13,6 +14,7 @@ export default function ProductPage() {
   const product = mockProducts.find((p) => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState(null);
+  useDocumentTitle(product ? `${product.name} | Velora` : "المنتج غير موجود | Velora");
 
   if (!product) {
     return (

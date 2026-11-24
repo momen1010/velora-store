@@ -9,6 +9,8 @@ import useCatalogFilters from "../components/catalog/useCatalogFilters";
 import { mockProducts } from "../components/catalog/mockProducts";
 import { CATEGORIES, L, SKIN_LABELS, SORT_OPTIONS, formatPrice } from "../components/catalog/catalogConfig";
 
+import useDocumentTitle from "../utils/useDocumentTitle";
+
 export default function CatalogPage({
   products = mockProducts,
   isLoading = false,
@@ -21,6 +23,7 @@ export default function CatalogPage({
   onOpenProduct,
   initialFilters, // من رابط /shop?category=...&skin=...&offers=1&sort=...&q=...
 }) {
+  useDocumentTitle("المتجر | Velora");
   const f = useCatalogFilters(products, initialFilters);
   const [sheetOpen, setSheetOpen] = useState(false);
 

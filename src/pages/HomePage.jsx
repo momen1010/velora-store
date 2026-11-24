@@ -5,7 +5,7 @@ import {
   Truck,
   ShieldCheck,
   Headset,
-  ArrowRight,
+  ArrowLeft,
   Sparkles,
   Menu,
   X,
@@ -13,7 +13,8 @@ import {
 import { useCallback, useMemo, useState } from "react";
 
 // ─── Cart (الموجود في مشروعك) ─────────────────────────────
-import { useCart } from "../context/CartContext";
+import { useCart, FREE_SHIPPING_THRESHOLD } from "../context/CartContext";
+import useDocumentTitle from "../utils/useDocumentTitle";
 
 // ─── Layout + Catalog ─────────────────────────────────────
 import { HeaderActions } from "../components/layout/SiteHeader";
@@ -24,7 +25,7 @@ import { formatPrice } from "../components/catalog/catalogConfig";
 /* ═══════════════════════════════════════════════════════════
    ثابت الشحن المجاني (كان مفقوداً)
    ═══════════════════════════════════════════════════════════ */
-const FREE_SHIPPING_THRESHOLD = 800; // بالجنيه المصري
+// الحد الأدنى للشحن المجاني يُقرأ من CartContext (٧٩٩ ج.م) عشان يبقى رقم واحد في كل الموقع
 
 /* ═══════════════════════════════════════════════════════════
    🎯 خريطة الروابط — مصدر واحد للحقيقة
@@ -46,29 +47,29 @@ const ROUTES = {
    ═══════════════════════════════════════════════════════════ */
 const categories = [
   {
-  name: "Bags",
-  subtitle: "Carry Your Elegance",
+  name: "الشنط",
+  subtitle: "أناقة تكمّل إطلالتك",
   image: null,
   color: "#E8E0D5", // لون بيج فخم
   to: "/shop?category=bags",
 },
 {
-  name: "Shoes",
-  subtitle: "Step Into Style",
+  name: "الأحذية",
+  subtitle: "خطوة بأسلوب مميز",
   image: null,
   color: "#D5C9C1", // لون رمادي دافئ
   to: "/shop?category=shoes",
 },
   {
-    name: "Skincare",
-    subtitle: "Healthy, Glowing Skin",
+    name: "العناية بالبشرة",
+    subtitle: "بشرة صحية ومشرقة",
     image: "/images/hydra-dew-gel-moisturizer.jpg",
     color: "#F7D4DC",
     to: ROUTES.skincare, // ← يذهب لقسم العناية بالبشرة
   },
   {
-    name: "Makeup",
-    subtitle: "Express Your Style",
+    name: "المكياج",
+    subtitle: "عبّري عن أسلوبك",
     image: "/images/velvet-matte-lip-cream.jpg",
     color: "#F6C4D0",
     to: ROUTES.makeup, // ← يذهب لقسم المكياج
@@ -81,12 +82,12 @@ const categories = [
    روابط الناف بار — كل رابط له وجهة صحيحة
    ═══════════════════════════════════════════════════════════ */
 const NAV_LINKS = [
-  { label: "Shop", to: ROUTES.shop, hasDropdown: true },
-  { label: "Skincare", to: ROUTES.skincare, hasDropdown: true },
-  { label: "Makeup", to: ROUTES.makeup, hasDropdown: true },
-  { label: "Bags", to: "/shop?category=bags" },
-  { label: "Shoes", to: "/shop?category=shoes" },
-  { label: "Offers", to: ROUTES.offers }, // ← فلتر العروض
+  { label: "المتجر", to: ROUTES.shop },
+  { label: "العناية بالبشرة", to: ROUTES.skincare },
+  { label: "المكياج", to: ROUTES.makeup },
+  { label: "الشنط", to: "/shop?category=bags" },
+  { label: "الأحذية", to: "/shop?category=shoes" },
+  { label: "العروض", to: ROUTES.offers }, // ← فلتر العروض
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -101,16 +102,12 @@ function AnnouncementBar() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-2">
         <span className="inline-flex items-center gap-1.5">
           <Truck className="h-4 w-4" aria-hidden="true" />
-          Free Shipping on orders over {formatPrice(FREE_SHIPPING_THRESHOLD)}
+          شحن مجاني للطلبات فوق {formatPrice(FREE_SHIPPING_THRESHOLD)}
         </span>
         <span className="hidden h-4 w-px bg-[#9E526C]/50 md:block" aria-hidden="true" />
-        <span className="inline-flex items-center gap-1.5">
-
-        </span>
-        <span className="hidden h-4 w-px bg-[#9E526C]/50 lg:block" aria-hidden="true" />
-        <span className="hidden items-center gap-1.5 lg:inline-flex">
+        <span className="hidden items-center gap-1.5 md:inline-flex">
           <Sparkles className="h-4 w-4" aria-hidden="true" />
-          Beauty Today. Confidence Forever.
+          الدفع عند الاستلام
         </span>
       </div>
     </div>
@@ -157,7 +154,6 @@ function HomeHeader() {
               className="inline-flex items-center gap-0.5 transition hover:text-[#E83E78]"
             >
               {link.label}
-              {link.hasDropdown && <span className="text-xs">⌄</span>}
             </Link>
           ))}
         </nav>
@@ -225,29 +221,21 @@ function HomeHeader() {
    ═══════════════════════════════════════════════════════════ */
 function HeroSection() {
   return (
-    <section className="relative min-h-[500px] overflow-hidden bg-[#F9DDE4] lg:min-h-[525px]">
-      <img
-        src="/velora-hero.png"
-        alt="velora Beauty Collection"
-        fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover object-center"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#FBE4E9]/95 via-[#FBE4E9]/65 to-transparent lg:w-[65%]" />
-
-      <div className="relative mx-auto flex min-h-[500px] max-w-[1500px] items-center px-6 py-14 lg:min-h-[525px] lg:px-10">
-        <div className="max-w-[700px]">
-          <p className="mb-4 text-sm font-bold tracking-[0.22em] text-[#E83E78] sm:text-base">
-            RADIANT BEAUTY. REAL YOU.
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#FBE4E9] to-[#F9DDE4]">
+      <div className="mx-auto grid max-w-[1500px] items-center lg:grid-cols-2">
+        <div className="px-6 py-12 lg:px-10 lg:py-16">
+          <p className="mb-4 text-sm font-bold tracking-wide text-[#E83E78] sm:text-base">
+            جمال مشرق. أنتِ الحقيقية.
           </p>
 
-          <h1 className="max-w-[720px] font-['Cormorant_Garamond',Georgia,serif] text-5xl font-bold leading-[1.05] text-black sm:text-6xl lg:text-[76px]">
-            velora Beauty
+          <h1 className="text-4xl font-bold leading-[1.25] text-black sm:text-5xl lg:text-6xl">
+            <span className="font-['Cormorant_Garamond',Georgia,serif]">Velora</span>
             <br />
-            For a More <span className="italic text-[#E83E78]">Confident</span> You
+            لإطلالة أكثر <span className="text-[#E83E78]">ثقة</span>
           </h1>
 
           <p className="mt-6 max-w-[450px] text-lg leading-8 text-[#26191E] sm:text-xl">
-            Premium skincare &amp; makeup products for your natural beauty.
+            منتجات عناية ومكياج فاخرة لجمالك الطبيعي.
           </p>
 
           {/* CTA → الكتالوج الكامل */}
@@ -255,8 +243,8 @@ function HeroSection() {
             to={ROUTES.shop}
             className="mt-8 inline-flex h-14 items-center gap-4 rounded-full bg-gradient-to-r from-[#E83E78] to-[#CA2867] px-8 text-base font-semibold text-white shadow-lg shadow-pink-500/20 transition hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#E83E78] focus:ring-offset-2"
           >
-            Shop the Collection
-            <ArrowRight className="h-5 w-5" aria-hidden="true" />
+            تسوّقي المجموعة
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
 
           {/* Trust Indicators */}
@@ -264,30 +252,41 @@ function HeroSection() {
             <div className="flex items-center gap-3">
               <Truck className="h-8 w-8 shrink-0" aria-hidden="true" />
               <span>
-                Free Shipping
+                شحن مجاني
                 <br />
-                Over {formatPrice(FREE_SHIPPING_THRESHOLD)}
+                فوق {formatPrice(FREE_SHIPPING_THRESHOLD)}
               </span>
             </div>
             <div className="hidden h-9 w-px bg-[#B76C85] sm:block" aria-hidden="true" />
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-8 w-8 shrink-0" aria-hidden="true" />
               <span>
-                Secure
+                الدفع عند
                 <br />
-                Payments
+                الاستلام
               </span>
             </div>
             <div className="hidden h-9 w-px bg-[#B76C85] sm:block" aria-hidden="true" />
             <div className="flex items-center gap-3">
               <Headset className="h-8 w-8 shrink-0" aria-hidden="true" />
               <span>
-                24/7 Customer
+                توصيل لكل
                 <br />
-                Support
+                المحافظات
               </span>
             </div>
           </div>
+        </div>
+
+        <div className="relative">
+          <img
+            src="/velora-hero.webp"
+            alt="منتجات Velora للعناية والمكياج"
+            fetchPriority="high"
+            width="972"
+            height="791"
+            className="h-full w-full object-cover object-center lg:[mask-image:linear-gradient(to_left,transparent,black_18%)]"
+          />
         </div>
       </div>
     </section>
@@ -328,13 +327,13 @@ function CategorySection() {
             )}
 
             <div className="relative z-10 max-w-[65%]">
-              <h2 className="font-['Cormorant_Garamond',Georgia,serif] text-3xl font-bold text-black">
+              <h2 className="text-3xl font-bold text-black">
                 {category.name}
               </h2>
               <p className="mt-1 text-sm text-black">{category.subtitle}</p>
               <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/40 px-4 py-2 text-sm font-semibold text-black transition group-hover:bg-white">
-                Shop Now
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                تسوّقي الآن
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               </span>
             </div>
           </Link>
@@ -380,12 +379,12 @@ function BestSellers() {
         <div>
           <h2
             id="best-sellers-heading"
-            className="font-['Cormorant_Garamond',Georgia,serif] text-4xl font-bold text-black sm:text-5xl"
+            className="text-4xl font-bold text-black sm:text-5xl"
           >
-            Best Sellers
+            الأكثر مبيعاً
           </h2>
           <p className="mt-2 text-sm text-[#5D424D] sm:text-base">
-            Loved by thousands of beauty enthusiasts.
+            اختياراتنا الأكثر طلباً من عميلاتنا.
           </p>
         </div>
         <span className="hidden h-px w-24 bg-[#E83E78] sm:block" aria-hidden="true" />
@@ -411,7 +410,7 @@ function BestSellers() {
           to={ROUTES.bestSellers}
           className="inline-flex h-12 items-center justify-center rounded-full border border-[#E83E78] px-8 text-sm font-semibold text-[#C52E68] transition hover:bg-[#E83E78] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E83E78] focus:ring-offset-2"
         >
-          View All Products
+          عرض كل المنتجات
         </Link>
       </div>
     </section>
@@ -422,10 +421,11 @@ function BestSellers() {
    HomePage
    ═══════════════════════════════════════════════════════════ */
 export default function HomePage() {
+  useDocumentTitle("Velora | متجر العناية بالبشرة والمكياج");
   return (
     <div
-      dir="ltr"
-      className="min-h-screen overflow-x-hidden bg-[#FFFAFB] font-['Inter',system-ui,sans-serif] text-[#171313]"
+      dir="rtl"
+      className="min-h-screen overflow-x-hidden bg-[#FFFAFB] font-['Tajawal',system-ui,sans-serif] text-[#171313]"
     >
       <AnnouncementBar />
       <HomeHeader />
@@ -434,6 +434,10 @@ export default function HomePage() {
         <CategorySection />
         <BestSellers />
       </main>
+      <footer className="border-t border-[#F3D5DD] py-6 text-center text-sm text-[#8C6F7B]">
+        © {new Date().getFullYear()} velora. جميع الحقوق محفوظة.
+      </footer>
+
     </div>
   );
 }

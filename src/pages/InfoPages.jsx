@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import PageShell from "../components/layout/PageShell";
 import useDocumentTitle from "../utils/useDocumentTitle";
-import { WHATSAPP_NUMBER, DELIVERY_DAYS, RETURN_DAYS, STORE_EMAIL } from "../config/store";
+import { WHATSAPP_NUMBER, DELIVERY_DAYS, RETURN_LABEL, STORE_EMAIL } from "../config/store";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "../context/CartContext";
 import { formatPrice } from "../components/catalog/catalogConfig";
 
@@ -84,7 +84,7 @@ export function ShippingReturnsPage() {
       </Section>
       <Section title="الاسترجاع والاستبدال">
         <ul className="list-disc space-y-1 pe-5">
-          <li>تقدري تطلبي الاسترجاع أو الاستبدال خلال {RETURN_DAYS} يوم من الاستلام.</li>
+          <li>تقدري تطلبي الاسترجاع أو الاستبدال خلال {RETURN_LABEL} من الاستلام.</li>
           <li>الشنط والأحذية: لازم تكون غير مستخدمة وبحالتها الأصلية.</li>
           <li>منتجات العناية والمكياج: لأسباب صحية، بنقبل استرجاعها لو كانت مقفولة وغير مستخدمة، أو لو وصلتك تالفة أو مختلفة عن طلبك.</li>
           <li>لو المنتج وصلك تالف أو غلط، كلمينا على واتساب بصورة للمنتج وهنحل الموضوع فوراً.</li>

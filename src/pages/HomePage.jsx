@@ -7,7 +7,7 @@ import useDocumentTitle from "../utils/useDocumentTitle";
 
 // ─── Layout + Catalog ─────────────────────────────────────
 import SiteHeader from "../components/layout/SiteHeader";
-import { WHATSAPP_NUMBER, RETURN_DAYS } from "../config/store";
+import { WHATSAPP_NUMBER, RETURN_LABEL } from "../config/store";
 import ProductCard from "../components/catalog/ProductCard";
 import { mockProducts } from "../components/catalog/mockProducts";
 import { formatPrice } from "../components/catalog/catalogConfig";
@@ -125,7 +125,7 @@ function TrustStrip() {
   const items = [
     { Icon: Truck, title: "توصيل لكل المحافظات", text: `شحن مجاني فوق ${formatPrice(FREE_SHIPPING_THRESHOLD)}` },
     { Icon: Banknote, title: "الدفع عند الاستلام", text: "ادفعي لمندوب الشحن بعد المعاينة" },
-    { Icon: RotateCcw, title: "استرجاع واستبدال", text: `خلال ${RETURN_DAYS} يوم من الاستلام` },
+    { Icon: RotateCcw, title: "استرجاع واستبدال", text: `خلال ${RETURN_LABEL} من الاستلام` },
     { Icon: Headset, title: "دعم على واتساب", text: "بنرد عليكي بشكل مباشر" },
   ];
   return (

@@ -18,6 +18,7 @@ export const WALLET_NUMBER = /^01[0125]\d{8}$/.test(w) ? w : "";
 export const WALLET_NAME = "اتصالات كاش";
 
 // سياسات المتجر (مكان واحد للتعديل). عدّل الأرقام هنا فقط وتتحدث كل الصفحات.
-export const DELIVERY_DAYS = "٢ إلى ٥ أيام عمل";
-export const RETURN_DAYS = 14;
+export const DELIVERY_DAYS = "من ١ إلى ٣ أيام";
+export const RETURN_DAYS = 5;
+export const RETURN_LABEL = "٥ أيام";
 export const STORE_EMAIL = "";

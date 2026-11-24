@@ -2,6 +2,7 @@
 import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Banknote, CheckCircle2, MapPin, MessageCircle, Smartphone, Sparkles } from "lucide-react";
+import { DELIVERY_DAYS } from "../config/store";
 import PageShell from "../components/layout/PageShell";
 import { formatPrice } from "../components/catalog/catalogConfig";
 import { getOrderById } from "../services/orderService";
@@ -43,7 +44,7 @@ export default function OrderConfirmationPage() {
         <h1 className="mt-4 text-2xl font-bold">تم استلام طلبك، شكراً لك</h1>
         <p className="mt-2 text-sm leading-7 text-[#8C6F7B]">
           سنتواصل معك على <span dir="ltr" className="font-medium text-[#4A2C3A]">{customer.phone}</span> لتأكيد الطلب،
-          <br />والتوصيل المتوقع خلال 2 إلى 4 أيام عمل.
+          <br />مدة التوصيل المتوقعة: {DELIVERY_DAYS}.
         </p>
         <div className="mt-5 rounded-2xl bg-[#FBE4EA] px-6 py-3">
           <p className="text-xs text-[#8C6F7B]">رقم الطلب</p>

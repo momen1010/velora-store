@@ -6,13 +6,13 @@ import SearchBar from "../components/catalog/SearchBar";
 import FilterPanel, { FilterSheet } from "../components/catalog/FilterPanel";
 import ProductGrid from "../components/catalog/ProductGrid";
 import useCatalogFilters from "../components/catalog/useCatalogFilters";
-import { mockProducts } from "../components/catalog/mockProducts";
-import { CATEGORIES, L, SKIN_LABELS, SORT_OPTIONS, formatPrice } from "../components/catalog/catalogConfig";
+import { useCatalog } from "../context/CatalogContext";
+import { CATEGORIES as STATIC_CATEGORIES, L, SKIN_LABELS, SORT_OPTIONS, formatPrice } from "../components/catalog/catalogConfig";
 
 import useDocumentTitle from "../utils/useDocumentTitle";
 
 export default function CatalogPage({
-  products = mockProducts,
+  products: productsProp,
   isLoading = false,
   cartItems = [],
   currency,
@@ -24,6 +24,9 @@ export default function CatalogPage({
   initialFilters, // من رابط /shop?category=...&skin=...&offers=1&sort=...&q=...
 }) {
   useDocumentTitle("المتجر | Velora");
+  const catalog = useCatalog();
+  const products = productsProp ?? catalog.products;
+  const CATEGORIES = catalog.categories ? [STATIC_CATEGORIES[0], ...catalog.categories] : STATIC_CATEGORIES;
   const f = useCatalogFilters(products, initialFilters);
   const [sheetOpen, setSheetOpen] = useState(false);
 

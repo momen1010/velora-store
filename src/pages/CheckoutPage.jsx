@@ -6,6 +6,8 @@ import PageShell from "../components/layout/PageShell";
 import { formatPrice } from "../components/catalog/catalogConfig";
 import { useCart } from "../context/CartContext";
 import { createOrder } from "../services/orderService";
+import { useCatalog } from "../context/CatalogContext";
+import PromoBox from "../components/cart/PromoBox";
 import { WALLET_NUMBER, WALLET_NAME, WHATSAPP_NUMBER } from "../config/store";
 import { buildOrderMessage, whatsappLink } from "../utils/whatsapp";
 
@@ -56,7 +58,8 @@ const inputCls = (err) =>
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, subtotal, shipping, total, clearCart } = useCart();
+  const { cart, subtotal, shipping, total, discount, promo, clearCart } = useCart();
+  const { settings } = useCatalog();
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -119,6 +122,7 @@ export default function CheckoutPage() {
           items: cart,
           subtotal,
           shipping,
+          discount,
           total,
         })
       );
@@ -140,6 +144,8 @@ export default function CheckoutPage() {
           notes: form.notes.trim(),
         },
         items: cart,
+        settings,
+        promo,
         paymentMethod: method,
         walletSender: method === "wallet" ? normalizePhone(form.walletSender) : "",
       });
@@ -332,12 +338,14 @@ export default function CheckoutPage() {
 
           <dl className="mt-5 space-y-2 border-t border-[#F3D5DD] pt-4 text-sm">
             <div className="flex justify-between text-[#8C6F7B]"><dt>المجموع الفرعي</dt><dd className="text-[#4A2C3A]">{formatPrice(subtotal)}</dd></div>
+            {discount > 0 && <div className="flex justify-between text-[#8C6F7B]"><dt>الخصم</dt><dd className="font-medium text-[#C2557A]">- {formatPrice(discount)}</dd></div>}
             <div className="flex justify-between text-[#8C6F7B]">
               <dt>الشحن</dt>
               <dd className={shipping === 0 ? "font-medium text-[#C2557A]" : "text-[#4A2C3A]"}>{shipping === 0 ? "مجاني" : formatPrice(shipping)}</dd>
             </div>
             <div className="flex justify-between border-t border-[#F3D5DD] pt-3 text-base font-bold"><dt>الإجمالي</dt><dd>{formatPrice(total)}</dd></div>
           </dl>
+          <PromoBox />
 
           {submitError && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{submitError}</p>}
 

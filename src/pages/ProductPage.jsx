@@ -5,7 +5,7 @@ import { Heart, ShoppingBag, ChevronLeft } from "lucide-react";
 import { SKIN_LABELS } from "../components/catalog/catalogConfig";
 import SiteHeader from "../components/layout/SiteHeader";
 import ProductCard from "../components/catalog/ProductCard";
-import { mockProducts } from "../components/catalog/mockProducts";
+import { useCatalog } from "../context/CatalogContext";
 import useDocumentTitle from "../utils/useDocumentTitle";
 import { useCart } from "../context/CartContext"; // أو useStore حسب مشروعك
 import { formatPrice } from "../components/catalog/catalogConfig";
@@ -15,6 +15,7 @@ export default function ProductPage() {
   const { addToCart, wishlist = [], toggleWishlist } = useCart();
   const navigate = useNavigate();
 
+  const { products: mockProducts } = useCatalog();
   const product = mockProducts.find((p) => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState(null);

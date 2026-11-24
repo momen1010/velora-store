@@ -1,15 +1,16 @@
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Truck, Banknote, RotateCcw, Headset, ArrowLeft, Sparkles, MessageCircle } from "lucide-react";
 
 // ─── Cart (الموجود في مشروعك) ─────────────────────────────
-import { useCart, FREE_SHIPPING_THRESHOLD } from "../context/CartContext";
+import { useCart } from "../context/CartContext";
+import { useCatalog, useShipping } from "../context/CatalogContext";
 import useDocumentTitle from "../utils/useDocumentTitle";
 
 // ─── Layout + Catalog ─────────────────────────────────────
 import SiteHeader from "../components/layout/SiteHeader";
 import { WHATSAPP_NUMBER, RETURN_LABEL } from "../config/store";
 import ProductCard from "../components/catalog/ProductCard";
-import { mockProducts } from "../components/catalog/mockProducts";
 import { formatPrice } from "../components/catalog/catalogConfig";
 
 /* ═══════════════════════════════════════════════════════════
@@ -46,6 +47,7 @@ const categories = [
    AnnouncementBar
    ═══════════════════════════════════════════════════════════ */
 function AnnouncementBar() {
+  const { FREE_SHIPPING_THRESHOLD } = useShipping();
   return (
     <div
       role="banner"
@@ -70,6 +72,7 @@ function AnnouncementBar() {
    HeroSection — CTA يذهب إلى /shop (كتالوج كامل)
    ═══════════════════════════════════════════════════════════ */
 function HeroSection() {
+  const { FREE_SHIPPING_THRESHOLD } = useShipping();
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#FBE4E9] to-[#F9DDE4]">
       <div className="mx-auto grid max-w-[1500px] items-center lg:grid-cols-2">
@@ -122,6 +125,7 @@ function HeroSection() {
    CategorySection — كل بطاقة تذهب لفئتها
    ═══════════════════════════════════════════════════════════ */
 function TrustStrip() {
+  const { FREE_SHIPPING_THRESHOLD } = useShipping();
   const items = [
     { Icon: Truck, title: "توصيل لكل المحافظات", text: `شحن مجاني فوق ${formatPrice(FREE_SHIPPING_THRESHOLD)}` },
     { Icon: Banknote, title: "الدفع عند الاستلام", text: "ادفعي لمندوب الشحن بعد المعاينة" },
@@ -233,11 +237,12 @@ function WhatsAppBand() {
 /* ═══════════════════════════════════════════════════════════
    HomePage
    ═══════════════════════════════════════════════════════════ */
-const newIn = mockProducts.filter((p) => p.badge === "جديد").slice(0, 4);
-const best = mockProducts.filter((p) => p.badge === "الأكثر مبيعاً").sort((a, b) => b.rating - a.rating).slice(0, 8);
 
 export default function HomePage() {
   useDocumentTitle("Velora | متجر العناية بالبشرة والمكياج");
+  const { products } = useCatalog();
+  const newIn = useMemo(() => products.filter((p) => p.badge === "جديد").slice(0, 4), [products]);
+  const best = useMemo(() => products.filter((p) => p.badge === "الأكثر مبيعاً").sort((a, b) => b.rating - a.rating).slice(0, 8), [products]);
   return (
     <div
       dir="rtl"

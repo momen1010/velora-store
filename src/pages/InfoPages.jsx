@@ -5,7 +5,7 @@ import { MessageCircle } from "lucide-react";
 import PageShell from "../components/layout/PageShell";
 import useDocumentTitle from "../utils/useDocumentTitle";
 import { WHATSAPP_NUMBER, DELIVERY_DAYS, RETURN_LABEL, STORE_EMAIL } from "../config/store";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from "../context/CartContext";
+import { useShipping } from "../context/CatalogContext";
 import { formatPrice } from "../components/catalog/catalogConfig";
 
 function Page({ title, intro, children }) {
@@ -69,6 +69,7 @@ export function AboutPage() {
 }
 
 export function ShippingReturnsPage() {
+  const { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } = useShipping();
   return (
     <Page title="الشحن والاسترجاع" intro="كل اللي محتاجة تعرفيه عن التوصيل والدفع والاسترجاع.">
       <Section title="التوصيل">

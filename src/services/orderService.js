@@ -4,12 +4,12 @@
 // نسخة محلية من الطلب تُحفظ على جهاز العميل لصفحة التأكيد فقط.
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../firebase/config";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE, MAX_ITEM_QTY } from "../context/CartContext";
+import { MAX_ITEM_QTY, computeDiscount } from "../context/CartContext";
 import { sanitizeText } from "../utils/sanitize";
 
 const ORDERS_KEY = "velora_orders_v1";
 const MAX_STORED = 50;
-export const MAX_CART_LINES = 5; // لازم يطابق firestore.rules (حد 1000 تعبير في القواعد)
+export const MAX_CART_LINES = 4; // لازم يطابق firestore.rules (حد 1000 تعبير في القواعد)
 const SAVE_TIMEOUT_MS = 20000;
 
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -42,7 +42,7 @@ const withTimeout = (promise, ms) =>
  * ينشئ الطلب ويحسب الإجماليات من العناصر نفسها ثم يحفظه في Firestore.
  * @param {{ customer: object, items: object[], paymentMethod?: string }} payload
  */
-export async function createOrder({ customer, items, paymentMethod = "cod", walletSender = "" }) {
+export async function createOrder({ customer, items, paymentMethod = "cod", walletSender = "", settings, promo = null }) {
   if (!Array.isArray(items) || items.length === 0) throw new Error("السلة فارغة");
   if (items.length > MAX_CART_LINES) {
     throw Object.assign(new Error("too many lines"), {
@@ -69,7 +69,11 @@ export async function createOrder({ customer, items, paymentMethod = "cod", wall
   if (orderItems.some((i) => !Number.isFinite(i.price) || i.price < 0)) throw new Error("سعر غير صالح");
 
   const subtotal = round2(orderItems.reduce((s, i) => s + i.price * i.quantity, 0));
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const threshold = Number(settings?.freeShippingThreshold);
+  const fee = Number(settings?.shippingFee);
+  if (!Number.isFinite(threshold) || !Number.isFinite(fee)) throw new Error("إعدادات الشحن غير متاحة");
+  const shipping = subtotal >= threshold ? 0 : fee;
+  const discount = computeDiscount(promo, subtotal);
 
   const safeCustomer = {
     name: sanitizeText(customer.name),
@@ -88,7 +92,8 @@ export async function createOrder({ customer, items, paymentMethod = "cod", wall
     items: orderItems,
     subtotal,
     shipping,
-    total: round2(subtotal + shipping),
+    total: round2(subtotal - discount + shipping),
+    ...(discount > 0 ? { discount, promoCode: promo.code } : {}),
     ...(paymentMethod === "wallet" ? { walletSender: String(walletSender) } : {}),
   };
 

@@ -1,7 +1,8 @@
 // src/components/cart/CartDrawer.jsx
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Sparkles, Trash2, X } from "lucide-react";
-import { MAX_ITEM_QTY, FREE_SHIPPING_THRESHOLD, useCart } from "../../context/CartContext";
+import { MAX_ITEM_QTY, useCart } from "../../context/CartContext";
+import { useShipping } from "../../context/CatalogContext";
 import { formatPrice } from "../catalog/catalogConfig";
 
 /* ───────────── زر السلة (للهيدر) ───────────── */
@@ -26,6 +27,7 @@ export function CartButton({ className = "" }) {
 
 /* ───────────── شريط الشحن المجاني ───────────── */
 function FreeShippingBar({ subtotal, progress, remaining }) {
+  const { FREE_SHIPPING_THRESHOLD } = useShipping();
   const unlocked = subtotal >= FREE_SHIPPING_THRESHOLD;
   return (
     <div className="mx-5 mt-4 rounded-2xl bg-rose-50 p-4">

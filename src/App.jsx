@@ -10,6 +10,7 @@ import {
 
 import useDocumentTitle from "./utils/useDocumentTitle";
 import { CartProvider, useCart } from "./context/CartContext";
+import { CatalogProvider } from "./context/CatalogContext";
 import CartDrawer from "./components/cart/CartDrawer";
 import PageShell from "./components/layout/PageShell";
 import { HeaderActions } from "./components/layout/SiteHeader";
@@ -87,6 +88,7 @@ function NotFound() {
 export default function App() {
   return (
     <BrowserRouter>
+      <CatalogProvider>
       <CartProvider>
         <ScrollToTop />
 
@@ -111,6 +113,7 @@ export default function App() {
 
         <GlobalCartDrawer />
       </CartProvider>
+      </CatalogProvider>
     </BrowserRouter>
   );
 }

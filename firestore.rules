@@ -1,39 +1,85 @@
 rules_version = '2';
 
-// قواعد أمان Firestore لمتجر velora.
-// المبدأ: الزائر يقدر ينشئ طلباً صالحاً فقط. لا قراءة ولا تعديل ولا حذف من الزوار.
-// القراءة والإدارة للأدمن فقط (مستخدم عليه custom claim: admin == true).
-// أي مجموعة أخرى مغلقة تماماً.
+// قواعد أمان Firestore لمتجر velora (المتجر + لوحة الأدمن).
+// المبدأ: كل صلاحية تُفرض هنا على السيرفر، وليس في React.
+//  - الزائر: يقرأ المنتجات الظاهرة والأقسام والإعدادات العامة، وينشئ طلباً صالحاً فقط.
+//  - الأدمن: مستند في admins/{uid} بدور owner أو manager أو staff.
+//  - الأسعار والشحن والخصم تُعاد مراجعتها من بيانات المنتجات والإعدادات والعروض، ولا نثق بما يرسله العميل.
+//  - أي تعديل إداري حساس لازم يكون معه سجل في adminLogs داخل نفس الـ batch (existsAfter).
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ───────────── الأدوار ─────────────
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data;
+    }
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && adminDoc().active == true;
+    }
+    function isManager() { return isAdmin() && adminDoc().role in ['owner', 'manager']; }
+    function isOwner() { return isAdmin() && adminDoc().role == 'owner'; }
+
+    // لازم يكون في سجل في adminLogs بنفس الـ batch ويخص نفس الأدمن
+    function freshLog(d, old) {
+      return logged(d) && d.lastLogId != old.get('lastLogId', null);
+    }
+    function logged(d) {
+      return d.get('lastLogId', null) is string
+        && existsAfter(/databases/$(database)/documents/adminLogs/$(d.lastLogId))
+        && getAfter(/databases/$(database)/documents/adminLogs/$(d.lastLogId)).data.adminUid == request.auth.uid;
     }
 
     function isStr(v, minLen, maxLen) {
       return v is string && v.size() >= minLen && v.size() <= maxLen;
     }
+    function isNum(v) { return v is int || v is float; }
 
-    // فحص خفيف لكل صنف (قواعد Firestore لها حد 1000 تعبير للطلب الواحد).
-    // الحقول الاختيارية (brand, image, shade) تُقيَّد بالمفاتيح فقط؛ الواجهة تنظّفها،
-    // وأي عرض لها لاحقاً يجب أن يمر عبر React (يهرّب النص تلقائياً).
-    function validItem(i) {
-      return i.keys().hasOnly(['cartItemId', 'id', 'name', 'brand', 'image', 'price', 'shade', 'quantity'])
-        && i.cartItemId is string && i.cartItemId.size() <= 100
-        && (i.id is string || i.id is int)
-        && i.name is string && i.name.size() >= 1 && i.name.size() <= 200
-        && i.price is number && i.price >= 0 && i.price <= 100000
-        && i.quantity is int && i.quantity >= 1 && i.quantity <= 10;
+    // ───────────── الإعدادات ─────────────
+    function settings() {
+      return get(/databases/$(database)/documents/storeSettings/main).data;
     }
 
-    // لا توجد حلقات في القواعد، فنفحص حتى 5 أصناف (نفس MAX_CART_LINES في الكود)
+    // ───────────── المنتجات والأسعار ─────────────
+    function productOk(i) {
+      let p = get(/databases/$(database)/documents/products/$(string(i.id))).data;
+      let sp = p.get('salePrice', null);
+      return p.active == true
+        && i.price == (sp != null ? sp : p.price)
+        && (p.get('trackStock', false) != true || i.quantity <= p.stock);
+    }
+
+    // فحص كل صنف (قواعد Firestore: حد 1000 تعبير، وحد 10 قراءات للمستند الواحد)
+    function validItem(i) {
+      return i.keys().hasOnly(['cartItemId', 'id', 'name', 'brand', 'image', 'price', 'shade', 'quantity'])
+        && i.cartItemId is string && i.name is string && i.name.size() <= 200
+        && i.quantity is int && i.quantity >= 1 && i.quantity <= 10
+        && productOk(i);
+    }
     function validItemAt(items, idx) {
       return items.size() <= idx || validItem(items[idx]);
     }
-
     function lineTotal(items, idx) {
       return items.size() > idx ? items[idx].price * items[idx].quantity : 0;
+    }
+
+    // ───────────── العروض ─────────────
+    function promoValue(pr, sub) {
+      return pr.type == 'percent' ? sub * pr.value / 100 : (pr.value < sub ? pr.value : sub);
+    }
+    function promoOk(d) {
+      let pr = get(/databases/$(database)/documents/promotions/$(d.promoCode)).data;
+      return pr.active == true
+        && (pr.get('expiresAt', null) == null || pr.get('expiresAt', null) > request.time)
+        && d.subtotal >= pr.get('minOrder', 0)
+        && (pr.get('usageLimit', 0) == 0 || pr.get('usedCount', 0) < pr.usageLimit)
+        && math.abs(d.discount - promoValue(pr, d.subtotal)) < 0.01;
+    }
+    function discountOk(d) {
+      return 'promoCode' in d
+        ? (isStr(d.promoCode, 3, 30) && d.promoCode.matches('^[A-Z0-9_-]+$') && 'discount' in d && isNum(d.discount) && d.discount > 0 && promoOk(d))
+        : (!('discount' in d) || d.discount == 0);
     }
 
     function validCustomer(c) {
@@ -54,40 +100,199 @@ service cloud.firestore {
     }
 
     function validNewOrder(orderId, d) {
-      return d.keys().hasOnly(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt', 'walletSender'])
+      return d.keys().hasOnly(['paymentMethod', 'status', 'paymentStatus', 'customer', 'items', 'subtotal', 'shipping', 'discount', 'promoCode', 'total', 'createdAt', 'walletSender'])
         && d.keys().hasAll(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt'])
         && orderId.matches('^GLW-[0-9A-Z]{10}$')
-        // الدفع: عند الاستلام، أو تحويل على محفظة (مع رقم المحفظة اللي حوّل منها العميل)
         && ((d.paymentMethod == 'cod' && !('walletSender' in d))
           || (d.paymentMethod == 'wallet' && 'walletSender' in d && isStr(d.walletSender, 11, 11)
               && d.walletSender.matches('^01[0125][0-9]{8}$')))
         && d.status == 'pending'
+        && (!('paymentStatus' in d) || d.paymentStatus == 'unpaid')
         && d.createdAt == request.time
         && validCustomer(d.customer)
-        && d.items is list && d.items.size() >= 1 && d.items.size() <= 5
+        && d.items is list && d.items.size() >= 1 && d.items.size() <= 4
         && validItemAt(d.items, 0)
         && validItemAt(d.items, 1)
         && validItemAt(d.items, 2)
         && validItemAt(d.items, 3)
-        && validItemAt(d.items, 4)
-        // الإجماليات لازم تطابق الأصناف (فرق أقل من قرش للتقريب)
-        && (d.subtotal is int || d.subtotal is float)
-        && (d.shipping is int || d.shipping is float)
-        && (d.total is int || d.total is float)
-        && math.abs(d.subtotal - (lineTotal(d.items, 0) + lineTotal(d.items, 1) + lineTotal(d.items, 2) + lineTotal(d.items, 3) + lineTotal(d.items, 4))) < 0.01
-        && ((d.subtotal >= 799 && d.shipping == 0) || (d.subtotal < 799 && d.shipping == 50))
-        && math.abs(d.total - (d.subtotal + d.shipping)) < 0.01;
+        && isNum(d.subtotal) && isNum(d.shipping) && isNum(d.total)
+        && math.abs(d.subtotal - (lineTotal(d.items, 0) + lineTotal(d.items, 1) + lineTotal(d.items, 2) + lineTotal(d.items, 3))) < 0.01
+        && d.subtotal >= settings().minOrderAmount
+        && ((d.subtotal >= settings().freeShippingThreshold && d.shipping == 0)
+            || (d.subtotal < settings().freeShippingThreshold && d.shipping == settings().shippingFee))
+        && discountOk(d)
+        && math.abs(d.total - (d.subtotal - d.get('discount', 0) + d.shipping)) < 0.01;
+    }
+
+    // ───────────── الطلبات ─────────────
+    function okTransition(from, to) {
+      return from == to
+        || (from == 'pending' && to in ['confirmed', 'cancelled'])
+        || (from == 'confirmed' && to in ['preparing', 'cancelled'])
+        || (from == 'preparing' && to in ['ready', 'cancelled'])
+        || (from == 'ready' && to in ['out_for_delivery', 'cancelled'])
+        || (from == 'out_for_delivery' && to in ['delivered', 'cancelled']);
     }
 
     match /orders/{orderId} {
       // الزائر: إنشاء طلب صالح فقط. ممنوع get/list/update/delete.
       allow create: if validNewOrder(orderId, request.resource.data);
 
-      // الأدمن: قراءة، وتغيير حالة الطلب فقط (لا تعديل على بيانات العميل أو الأسعار).
       allow get, list: if isAdmin();
+
+      // الأدمن: الحالة، حالة الدفع، الملاحظات الداخلية، السجل. لا تعديل على العميل أو الأصناف أو المبالغ.
       allow update: if isAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status in ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'paymentStatus', 'internalNotes', 'statusHistory', 'lastLogId', 'updatedAt', 'stockDeducted', 'promoCounted'])
+        && okTransition(resource.data.status, request.resource.data.status)
+        && request.resource.data.status in ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']
+        && request.resource.data.get('paymentStatus', 'unpaid') in ['unpaid', 'paid', 'refunded']
+        && request.resource.data.get('internalNotes', '') is string
+        && request.resource.data.get('internalNotes', '').size() <= 2000
+        && request.resource.data.get('statusHistory', []) is list
+        && request.resource.data.get('statusHistory', []).size() <= 40
+        && freshLog(request.resource.data, resource.data);
+      allow delete: if false;
+    }
+
+    // ───────────── المنتجات ─────────────
+    function validProduct(d) {
+      return d.keys().hasOnly(['name', 'nameEn', 'brand', 'category', 'skinType', 'price', 'salePrice', 'badge', 'image', 'images',
+                               'shades', 'sizes', 'description', 'ingredients', 'usage', 'sku', 'stock', 'trackStock',
+                               'lowStockThreshold', 'active', 'featured', 'rating', 'reviews', 'sort', 'createdAt', 'updatedAt', 'lastLogId'])
+        && d.keys().hasAll(['name', 'category', 'price', 'active', 'stock', 'createdAt', 'updatedAt'])
+        && isStr(d.name, 1, 200)
+        && isStr(d.category, 1, 40)
+        && isNum(d.price) && d.price >= 0 && d.price <= 100000
+        && (d.get('salePrice', null) == null || (isNum(d.salePrice) && d.salePrice > 0 && d.salePrice < d.price))
+        && d.active is bool
+        && d.stock is int && d.stock >= 0 && d.stock <= 100000
+        && (!('sku' in d) || isStr(d.sku, 0, 40))
+        && (!('description' in d) || isStr(d.description, 0, 3000))
+        && (!('images' in d) || (d.images is list && d.images.size() <= 8))
+        && (!('image' in d) || isStr(d.image, 0, 300))
+        && (!('sizes' in d) || (d.sizes is list && d.sizes.size() <= 20))
+        && (!('shades' in d) || (d.shades is list && d.shades.size() <= 20))
+        && d.updatedAt == request.time;
+    }
+
+    match /products/{productId} {
+      allow get: if resource.data.active == true || isAdmin();
+      allow list: if resource.data.active == true || isAdmin();
+      allow create: if isManager() && validProduct(request.resource.data) && request.resource.data.createdAt == request.time && logged(request.resource.data);
+      allow update: if (isManager() && validProduct(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && freshLog(request.resource.data, resource.data))
+        // أي أدمن يقدر يعدّل المخزون فقط (خصم عند تأكيد الطلب) بشرط سجل مخزون
+        || (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'updatedAt', 'lastLogId'])
+            && request.resource.data.stock is int && request.resource.data.stock >= 0
+            && request.resource.data.updatedAt == request.time
+            && existsAfter(/databases/$(database)/documents/inventoryLogs/$(request.resource.data.lastLogId)));
+      allow delete: if isManager();
+    }
+
+    // ───────────── الأقسام ─────────────
+    match /categories/{categoryId} {
+      allow get, list: if resource.data.get('visible', true) == true || isAdmin();
+      allow create, update: if isManager()
+        && request.resource.data.keys().hasOnly(['name', 'description', 'image', 'visible', 'sort', 'createdAt', 'updatedAt', 'lastLogId'])
+        && isStr(request.resource.data.name, 1, 80)
+        && request.resource.data.get('visible', true) is bool
+        && request.resource.data.get('sort', 0) is int
+        && request.resource.data.updatedAt == request.time
+        && logged(request.resource.data)
+        && (resource == null || request.resource.data.lastLogId != resource.data.get('lastLogId', null));
+      allow delete: if isManager();
+    }
+
+    // ───────────── صور المنتجات (مخزّنة في Firestore لأن Storage يحتاج خطة مدفوعة) ─────────────
+    match /productImages/{imageId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isManager()
+        && request.resource.data.keys().hasOnly(['data', 'mime', 'bytes', 'createdAt', 'createdBy'])
+        && request.resource.data.mime in ['image/webp', 'image/jpeg', 'image/png']
+        && request.resource.data.data is string
+        && request.resource.data.data.size() <= 350000
+        && request.resource.data.data.matches('^data:image/(webp|jpeg|png);base64,.*')
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if isManager();
+    }
+
+    // ───────────── العروض ─────────────
+    match /promotions/{code} {
+      // العميل يقدر يتحقق من كود واحد (get) بدون ما يقدر يسرد كل الأكواد
+      allow get: if resource.data.active == true || isAdmin();
+      allow list: if isManager();
+      // عدّاد الاستخدام: أي أدمن يزوّده بواحد فقط (عند تأكيد طلب عليه كود) مع سجل
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount', 'updatedAt', 'lastLogId'])
+        && request.resource.data.usedCount == resource.data.get('usedCount', 0) + 1
+        && request.resource.data.updatedAt == request.time
+        && freshLog(request.resource.data, resource.data);
+      allow create, update: if isManager()
+        && code.matches('^[A-Z0-9_-]{3,30}$')
+        && request.resource.data.keys().hasOnly(['type', 'value', 'minOrder', 'usageLimit', 'usedCount', 'expiresAt', 'active', 'description', 'createdAt', 'updatedAt', 'lastLogId'])
+        && request.resource.data.type in ['percent', 'fixed']
+        && isNum(request.resource.data.value) && request.resource.data.value > 0
+        && (request.resource.data.type == 'fixed' || request.resource.data.value <= 100)
+        && request.resource.data.get('minOrder', 0) >= 0
+        && request.resource.data.get('usageLimit', 0) >= 0
+        && request.resource.data.get('usedCount', 0) >= 0
+        && request.resource.data.active is bool
+        && request.resource.data.updatedAt == request.time
+        && logged(request.resource.data)
+        && (resource == null || request.resource.data.lastLogId != resource.data.get('lastLogId', null));
+      allow delete: if isManager();
+    }
+
+    // ───────────── إعدادات المتجر ─────────────
+    match /storeSettings/{docId} {
+      allow get: if docId == 'main';
+      allow create, update: if isOwner() && docId == 'main'
+        && request.resource.data.keys().hasOnly(['storeName', 'logo', 'phone', 'whatsapp', 'email', 'address', 'shippingFee', 'freeShippingThreshold',
+                                                   'minOrderAmount', 'hours', 'paymentMethods', 'social', 'updatedAt', 'lastLogId'])
+        && isStr(request.resource.data.storeName, 1, 80)
+        && isNum(request.resource.data.shippingFee) && request.resource.data.shippingFee >= 0 && request.resource.data.shippingFee <= 1000
+        && isNum(request.resource.data.freeShippingThreshold) && request.resource.data.freeShippingThreshold >= 0
+        && isNum(request.resource.data.minOrderAmount) && request.resource.data.minOrderAmount >= 0
+        && request.resource.data.updatedAt == request.time
+        && logged(request.resource.data)
+        && (resource == null || request.resource.data.lastLogId != resource.data.get('lastLogId', null));
+      allow delete: if false;
+    }
+
+    // ───────────── السجلات (لا تعديل ولا حذف) ─────────────
+    match /adminLogs/{logId} {
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['adminUid', 'adminEmail', 'action', 'target', 'targetId', 'details', 'createdAt'])
+        && request.resource.data.adminUid == request.auth.uid
+        && isStr(request.resource.data.action, 1, 60)
+        && request.resource.data.createdAt == request.time;
+      allow get, list: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /inventoryLogs/{logId} {
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['productId', 'productName', 'change', 'before', 'after', 'reason', 'orderId', 'adminUid', 'createdAt'])
+        && request.resource.data.adminUid == request.auth.uid
+        && request.resource.data.change is int
+        && request.resource.data.after is int && request.resource.data.after >= 0
+        && request.resource.data.createdAt == request.time;
+      allow get, list: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ───────────── الأدمن ─────────────
+    match /admins/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isOwner());
+      allow list: if isOwner();
+      allow create, update: if isOwner()
+        && request.resource.data.keys().hasOnly(['email', 'role', 'active', 'createdAt', 'updatedAt'])
+        && request.resource.data.role in ['owner', 'manager', 'staff']
+        && request.resource.data.active is bool;
       allow delete: if false;
     }
 

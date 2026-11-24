@@ -3,10 +3,14 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from "react";
 import { Check } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { db, isFirebaseConfigured } from "../firebase/config";
+import { useCatalog } from "./CatalogContext";
 
 /* ───────────── الثوابت ───────────── */
-export const FREE_SHIPPING_THRESHOLD = 799; // الحد الأدنى للشحن المجاني (ج.م)
-export const SHIPPING_FEE = 50;             // رسوم الشحن الثابتة (ج.م)
+// قيم احتياطية فقط. القيم الفعلية تأتي من إعدادات المتجر في Firestore (storeSettings/main).
+export const FREE_SHIPPING_THRESHOLD = 799;
+export const SHIPPING_FEE = 50;
 export const MAX_ITEM_QTY = 10;             // أقصى كمية للصنف الواحد
 const CART_KEY = "velora_cart_v1";
 const WISHLIST_KEY = "velora_wishlist_v1";
@@ -65,6 +69,13 @@ export const buildCartItemId = (productId, shade, size) => {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
+// نفس معادلة firestore.rules: النسبة أو المبلغ الثابت (بحد أقصى المجموع الفرعي)
+export const computeDiscount = (promo, subtotal) => {
+  if (!promo || subtotal <= 0 || subtotal < (promo.minOrder ?? 0)) return 0;
+  const raw = promo.type === "percent" ? (subtotal * promo.value) / 100 : Math.min(promo.value, subtotal);
+  return round2(raw);
+};
+
 /* ───────────── Context ───────────── */
 const CartContext = createContext(null);
 
@@ -73,6 +84,10 @@ export function CartProvider({ children }) {
   const [wishlist, setWishlist] = useState(() => sanitizeWishlist(readStorage(WISHLIST_KEY, [])));
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  const [promo, setPromo] = useState(null);
+  const { products: catalog, settings, source } = useCatalog();
+  const feeSetting = Number(settings.shippingFee);
+  const thresholdSetting = Number(settings.freeShippingThreshold);
   const toastTimer = useRef(null);
 
   /* ── الحفظ التلقائي ── */
@@ -90,6 +105,24 @@ export function CartProvider({ children }) {
   }, []);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+  /* ── مطابقة أسعار السلة مع الكتالوج الحالي (السعر الحقيقي من قاعدة البيانات) ── */
+  useEffect(() => {
+    if (source !== "firestore") return;
+    setCart((prev) => {
+      let changed = false;
+      const next = prev.flatMap((i) => {
+        const p = catalog.find((x) => String(x.id) === String(i.id));
+        if (!p) { changed = true; return []; }
+        if (p.price !== i.price || (p.oldPrice ?? null) !== (i.oldPrice ?? null)) {
+          changed = true;
+          return [{ ...i, price: p.price, oldPrice: p.oldPrice ?? null, name: p.name }];
+        }
+        return [i];
+      });
+      return changed ? next : prev;
+    });
+  }, [catalog, source]);
 
   /* ── Toast ── */
   const showToast = useCallback((message) => {
@@ -163,7 +196,27 @@ export function CartProvider({ children }) {
     []
   );
 
-  const clearCart = useCallback(() => setCart([]), []);
+  const clearCart = useCallback(() => { setCart([]); setPromo(null); }, []);
+
+  /* ── كود الخصم: نتحقق منه هنا للعرض، والقواعد في السيرفر تعيد التحقق عند إنشاء الطلب ── */
+  const applyPromo = useCallback(async (rawCode) => {
+    const code = String(rawCode ?? "").trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{3,30}$/.test(code)) return { ok: false, message: "كود الخصم غير صحيح" };
+    if (!isFirebaseConfigured || !db) return { ok: false, message: "تعذّر التحقق من الكود الآن" };
+    try {
+      const snap = await getDoc(doc(db, "promotions", code));
+      if (!snap.exists()) return { ok: false, message: "كود الخصم غير صحيح" };
+      const d = snap.data();
+      const expired = d.expiresAt && d.expiresAt.toMillis() < Date.now();
+      if (d.active !== true || expired) return { ok: false, message: "كود الخصم منتهي" };
+      if (d.usageLimit > 0 && (d.usedCount ?? 0) >= d.usageLimit) return { ok: false, message: "تم استهلاك هذا الكود" };
+      setPromo({ code, type: d.type, value: d.value, minOrder: d.minOrder ?? 0 });
+      return { ok: true };
+    } catch {
+      return { ok: false, message: "كود الخصم غير صحيح" };
+    }
+  }, []);
+  const removePromo = useCallback(() => setPromo(null), []);
 
   /* ── المفضلة ── */
   const toggleWishlist = useCallback(
@@ -180,16 +233,22 @@ export function CartProvider({ children }) {
   const totals = useMemo(() => {
     const subtotal = round2(cart.reduce((sum, i) => sum + i.price * i.quantity, 0));
     const cartCount = cart.reduce((n, i) => n + i.quantity, 0);
-    const shipping = cart.length === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+    const threshold = Number.isFinite(thresholdSetting) ? thresholdSetting : FREE_SHIPPING_THRESHOLD;
+    const fee = Number.isFinite(feeSetting) ? feeSetting : SHIPPING_FEE;
+    const shipping = cart.length === 0 || subtotal >= threshold ? 0 : fee;
+    const discount = computeDiscount(promo, subtotal);
     return {
       subtotal,
       cartCount,
       shipping,
-      total: round2(subtotal + shipping),
-      amountToFreeShipping: round2(Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0)),
-      shippingProgress: Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100),
+      discount,
+      promoCode: discount > 0 ? promo.code : null,
+      promoMinOrder: promo && subtotal < promo.minOrder ? promo.minOrder : null,
+      total: round2(subtotal - discount + shipping),
+      amountToFreeShipping: round2(Math.max(threshold - subtotal, 0)),
+      shippingProgress: threshold > 0 ? Math.min((subtotal / threshold) * 100, 100) : 100,
     };
-  }, [cart]);
+  }, [cart, promo, thresholdSetting, feeSetting]);
 
   const value = useMemo(
     () => ({
@@ -197,10 +256,11 @@ export function CartProvider({ children }) {
       ...totals,
       openCart, closeCart,
       addToCart, updateQuantity, removeFromCart, clearCart,
+      applyPromo, removePromo, promo,
       toggleWishlist, isInWishlist,
     }),
     [cart, wishlist, isCartOpen, totals, openCart, closeCart, addToCart,
-     updateQuantity, removeFromCart, clearCart, toggleWishlist, isInWishlist]
+     updateQuantity, removeFromCart, clearCart, applyPromo, removePromo, promo, toggleWishlist, isInWishlist]
   );
 
   return (

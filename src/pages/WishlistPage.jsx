@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Heart } from "lucide-react";
 import PageShell from "../components/layout/PageShell";
 import ProductGrid from "../components/catalog/ProductGrid";
-import { mockProducts } from "../components/catalog/mockProducts";
+import { useCatalog } from "../context/CatalogContext";
 import { useCart } from "../context/CartContext";
 
 import useDocumentTitle from "../utils/useDocumentTitle";
@@ -18,11 +18,12 @@ export default function WishlistPage() {
     document.title = "المفضلة | velora";
   }, []);
 
+  const { products: mockProducts } = useCatalog();
   const wishSet = useMemo(() => new Set(wishlist), [wishlist]);
   // نحافظ على ترتيب الإضافة، ونتجاهل أي معرّف لم يعد موجوداً في الكتالوج
   const products = useMemo(
     () => wishlist.map((id) => mockProducts.find((p) => p.id === id)).filter(Boolean),
-    [wishlist]
+    [wishlist, mockProducts]
   );
 
   return (

@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { MessageCircle, Truck, Banknote, RotateCcw } from "lucide-react";
 import { WHATSAPP_NUMBER } from "../../config/store";
-import { FREE_SHIPPING_THRESHOLD } from "../../context/CartContext";
+import { useShipping } from "../../context/CatalogContext";
 import { formatPrice } from "../catalog/catalogConfig";
 
 const SHOP = [
@@ -22,6 +22,7 @@ const INFO = [
 const col = "text-sm text-[#8C6F7B] transition hover:text-[#C2557A]";
 
 export default function SiteFooter() {
+  const { FREE_SHIPPING_THRESHOLD } = useShipping();
   return (
     <footer dir="rtl" className="mt-10 border-t border-[#F3D5DD] bg-white font-['Tajawal',system-ui,sans-serif] text-[#4A2C3A]">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:grid-cols-4">

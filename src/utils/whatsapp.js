@@ -23,6 +23,7 @@ export function buildOrderMessage(order, { walletNumber = "", walletName = "" } 
   });
   lines.push("", LINE, "*💰 ملخص الحساب*");
   lines.push(`المجموع: ${egp(order.subtotal)}`);
+  if (order.discount > 0) lines.push(`الخصم: - ${egp(order.discount)}`);
   lines.push(`الشحن: ${order.shipping === 0 ? "مجاني 🎉" : egp(order.shipping)}`);
   lines.push(`*الإجمالي: ${egp(order.total)}*`);
   lines.push(

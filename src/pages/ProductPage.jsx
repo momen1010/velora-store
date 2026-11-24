@@ -25,6 +25,7 @@ export default function ProductPage() {
     );
   }
 
+  const isGoods = product.category === "bags" || product.category === "shoes";
   const isWishlisted = Array.isArray(wishlist) && (wishlist.includes(product.id) || wishlist.some(w => w?.id === product.id));
 
   const handleAddToCart = () => {
@@ -42,7 +43,7 @@ export default function ProductPage() {
         <Link to="/" className="hover:text-velora-pink">الرئيسية</Link>
         <ChevronLeft className="h-4 w-4" />
         <Link to={`/shop?category=${product.category}`} className="hover:text-velora-pink">
-          {product.category === "bags" ? "الشنط" : product.category === "shoes" ? "الشوزات" : product.category === "makeup" ? "المكياج" : "العناية بالبشرة"}
+          {product.category === "bags" ? "الشنط" : product.category === "shoes" ? "الأحذية" : product.category === "makeup" ? "المكياج" : "العناية بالبشرة"}
         </Link>
         <ChevronLeft className="h-4 w-4" />
         <span className="font-semibold text-gray-800">{product.name}</span>
@@ -143,20 +144,20 @@ export default function ProductPage() {
             {/* المكونات */}
             <details className="group border-b border-gray-100 py-4">
               <summary className="flex cursor-pointer items-center justify-between font-semibold text-gray-800">
-                <span>المكونات</span>
+                <span>{isGoods ? "الخامات والتفاصيل" : "المكونات"}</span>
                 <span className="transition group-open:rotate-180">
                   <ChevronLeft className="h-5 w-5 -rotate-90" />
                 </span>
               </summary>
               <p className="mt-3 text-sm leading-relaxed text-gray-600">
-                {product.ingredients || "لا توجد مكونات مسجلة."}
+                {product.ingredients || (isGoods ? "لا توجد تفاصيل مسجلة." : "لا توجد مكونات مسجلة.")}
               </p>
             </details>
 
             {/* طريقة الاستخدام */}
             <details className="group border-b border-gray-100 py-4">
               <summary className="flex cursor-pointer items-center justify-between font-semibold text-gray-800">
-                <span>طريقة الاستخدام</span>
+                <span>{isGoods ? "العناية بالمنتج" : "طريقة الاستخدام"}</span>
                 <span className="transition group-open:rotate-180">
                   <ChevronLeft className="h-5 w-5 -rotate-90" />
                 </span>

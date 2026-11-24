@@ -44,7 +44,7 @@ export default function CatalogPage({
 
   const panel = (
     <FilterPanel
-      skinOptions={f.skinOptions}
+      skinOptions={f.category === "bags" || f.category === "shoes" ? [] : f.skinOptions}
       skinTypes={f.skinTypes}
       onToggleSkinType={f.toggleSkinType}
       bounds={f.bounds}

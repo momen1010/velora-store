@@ -20,6 +20,7 @@ export default function FilterPanel({
   const sliderClass = "w-full accent-[#C2557A]";
   return (
     <div className="flex flex-col gap-7">
+      {skinOptions.length > 0 && (
       <section aria-labelledby="f-skin">
         <h3 id="f-skin" className="mb-3 text-sm font-bold text-[#4A2C3A]">{L.skinType}</h3>
         <div className="flex flex-wrap gap-2">
@@ -43,6 +44,7 @@ export default function FilterPanel({
           })}
         </div>
       </section>
+      )}
 
       <section aria-labelledby="f-price">
         <h3 id="f-price" className="mb-3 text-sm font-bold text-[#4A2C3A]">{L.price}</h3>

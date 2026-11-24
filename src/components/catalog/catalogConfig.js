@@ -19,7 +19,7 @@ export const CATEGORIES = [
   { id: "skincare", label: "العناية بالبشرة" },
   { id: "makeup", label: "المكياج" },
   { id: "bags", label: "الشنط" },     // ✅ القسم الجديد
-  { id: "shoes", label: "الشوزات" },  // ✅ القسم الجديد
+  { id: "shoes", label: "الأحذية" },  // ✅ القسم الجديد
 ];
 
 export const SKIN_LABELS = {

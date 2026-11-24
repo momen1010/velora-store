@@ -1,0 +1,9 @@
+{
+  "name": "velora-rules-tests",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "firebase": "^12.0.0",
+    "@firebase/rules-unit-testing": "^5.0.2"
+  }
+}

@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:rules": "npx --yes firebase-tools@13 emulators:exec --only firestore --project demo-velora 'node tests/firestore.rules.test.mjs'"
+    "test:rules": "npm --prefix tests install --no-audit --no-fund && npx --yes firebase-tools@13 emulators:exec --only firestore --project demo-velora \"node tests/firestore.rules.test.mjs\""
   },
   "dependencies": {
     "firebase": "^13.3.0",
@@ -19,7 +19,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

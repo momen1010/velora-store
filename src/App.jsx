@@ -19,6 +19,8 @@ import CatalogPage from "./pages/CatalogPage";
 import ProductPage from "./pages/ProductPage";
 import WishlistPage from "./pages/WishlistPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import SiteFooter from "./components/layout/SiteFooter";
+import { AboutPage, ShippingReturnsPage, PrivacyPage, ContactPage } from "./pages/InfoPages";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 
 function ScrollToTop() {
@@ -97,8 +99,15 @@ export default function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order/:orderId" element={<OrderConfirmationPage />} />
 
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/shipping-returns" element={<ShippingReturnsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
+
+        <SiteFooter />
 
         <GlobalCartDrawer />
       </CartProvider>

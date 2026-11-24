@@ -434,9 +434,6 @@ export default function HomePage() {
         <CategorySection />
         <BestSellers />
       </main>
-      <footer className="border-t border-[#F3D5DD] py-6 text-center text-sm text-[#8C6F7B]">
-        © {new Date().getFullYear()} velora. جميع الحقوق محفوظة.
-      </footer>
 
     </div>
   );

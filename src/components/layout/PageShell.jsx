@@ -10,9 +10,6 @@ export default function PageShell({ children, maxWidth = "max-w-7xl" }) {
     >
       <SiteHeader />
       <main className={`mx-auto w-full flex-1 px-4 py-6 md:py-10 ${maxWidth}`}>{children}</main>
-      <footer className="border-t border-[#F3D5DD] py-6 text-center text-sm text-[#8C6F7B]">
-        © {new Date().getFullYear()} velora. جميع الحقوق محفوظة.
-      </footer>
     </div>
   );
 }

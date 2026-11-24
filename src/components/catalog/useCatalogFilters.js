@@ -140,7 +140,7 @@ export default function useCatalogFilters(products = []) {
       }
 
       if (tokens.length) {
-        const hay = norm(`${p.name} ${p.brand}`);
+        const hay = norm(`${p.name} ${p.nameEn || ""} ${p.brand}`);
         if (!tokens.every((t) => hay.includes(t))) return false;
       }
       return true;

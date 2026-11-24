@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Heart, ShoppingBag, ChevronLeft } from "lucide-react";
+import { SKIN_LABELS } from "../components/catalog/catalogConfig";
 import { mockProducts } from "../components/catalog/mockProducts";
 import useDocumentTitle from "../utils/useDocumentTitle";
 import { useCart } from "../context/CartContext"; // أو useStore حسب مشروعك
@@ -72,9 +73,9 @@ export default function ProductPage() {
             )}
           </div>
 
-          {product.skinType && (
+          {product.skinType && !isGoods && (
              <p className="mt-2 text-sm text-gray-500">
-               مناسب لـ: {product.skinType.includes("all") ? "جميع الأنواع" : product.skinType.join(", ")}
+               مناسب لـ: {product.skinType.includes("all") ? "جميع الأنواع" : product.skinType.map((t) => SKIN_LABELS[t] ?? t).join("، ")}
              </p>
           )}
 

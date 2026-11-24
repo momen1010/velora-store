@@ -4,7 +4,8 @@ export const mockProducts = [
   // ═══════════════════════════════════════════════════════════
   {
     id: "1",
-    name: "Hydra Dew Gel Moisturizer",
+    name: "جل هيدرا ديو المرطب",
+    nameEn: "Hydra Dew Gel Moisturizer",
     brand: "Lumière",
     category: "skincare",
     skinType: ["dry", "normal"],
@@ -24,7 +25,8 @@ export const mockProducts = [
   },
   {
     id: "2",
-    name: "Ceramide Barrier Repair Cream",
+    name: "كريم السيراميد لإصلاح حاجز البشرة",
+    nameEn: "Ceramide Barrier Repair Cream",
     brand: "Pure Bloom",
     category: "skincare",
     skinType: ["sensitive", "dry"],
@@ -44,7 +46,8 @@ export const mockProducts = [
   },
   {
     id: "3",
-    name: "Vitamin C Brightening Serum",
+    name: "سيروم فيتامين سي للإشراقة",
+    nameEn: "Vitamin C Brightening Serum",
     brand: "Lumière",
     category: "skincare",
     skinType: ["all"],
@@ -64,7 +67,8 @@ export const mockProducts = [
   },
   {
     id: "4",
-    name: "Velvet Matte Lip Cream",
+    name: "أحمر شفاه كريمي مطفي",
+    nameEn: "Velvet Matte Lip Cream",
     brand: "Rosé Atelier",
     category: "makeup",
     skinType: ["all"],
@@ -87,7 +91,8 @@ export const mockProducts = [
   },
   {
     id: "5",
-    name: "Cream Eyeshadow",
+    name: "ظلال عيون كريمية",
+    nameEn: "Cream Eyeshadow",
     brand: "VELORA",
     category: "makeup",
     skinType: ["all"],
@@ -115,7 +120,8 @@ export const mockProducts = [
   // ═══════════════════════════════════════════════════════════
   {
     id: "bag-001",
-    name: "Classic Leather Tote",
+    name: "شنطة توت جلد كلاسيك",
+    nameEn: "Classic Leather Tote",
     brand: "Velora",
     category: "bags",
     skinType: ["all"], 
@@ -135,7 +141,8 @@ export const mockProducts = [
   
   {
     id: "bag-002",
-    name: "Mini Crossbody Bag",
+    name: "شنطة كروس ميني",
+    nameEn: "Mini Crossbody Bag",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -158,7 +165,8 @@ export const mockProducts = [
   // ═══════════════════════════════════════════════════════════
   {
     id: "shoe-001",
-    name: "Elegant Pointed Heels",
+    name: "حذاء كعب مدبب أنيق",
+    nameEn: "Elegant Pointed Heels",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -177,7 +185,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-002",
-    name: "Comfort White Sneakers",
+    name: "كوتشي أبيض مريح",
+    nameEn: "Comfort White Sneakers",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -198,7 +207,8 @@ export const mockProducts = [
   // ═══ منتجات جديدة ═══
   {
     id: "skin-006",
-    name: "Nourishing Face Oil",
+    name: "زيت الوجه المغذي",
+    nameEn: "Nourishing Face Oil",
     brand: "Pure Bloom",
     category: "skincare",
     skinType: ["dry", "normal"],
@@ -217,7 +227,8 @@ export const mockProducts = [
   },
   {
     id: "skin-007",
-    name: "Peptide Firming Cream",
+    name: "كريم الببتيد المشدّ",
+    nameEn: "Peptide Firming Cream",
     brand: "Lumière",
     category: "skincare",
     skinType: ["all"],
@@ -236,7 +247,8 @@ export const mockProducts = [
   },
   {
     id: "skin-008",
-    name: "Gentle Cleansing Oil",
+    name: "زيت التنظيف اللطيف",
+    nameEn: "Gentle Cleansing Oil",
     brand: "Pure Bloom",
     category: "skincare",
     skinType: ["all"],
@@ -255,7 +267,8 @@ export const mockProducts = [
   },
   {
     id: "skin-009",
-    name: "Rose Soft Hand Cream",
+    name: "كريم اليدين بالورد",
+    nameEn: "Rose Soft Hand Cream",
     brand: "Rosé Atelier",
     category: "skincare",
     skinType: ["all"],
@@ -274,7 +287,8 @@ export const mockProducts = [
   },
   {
     id: "skin-010",
-    name: "Rose Water Hydrating Toner",
+    name: "تونر ماء الورد المرطب",
+    nameEn: "Rose Water Hydrating Toner",
     brand: "Lumière",
     category: "skincare",
     skinType: ["sensitive", "normal", "dry"],
@@ -293,7 +307,8 @@ export const mockProducts = [
   },
   {
     id: "skin-011",
-    name: "Daily Sunscreen SPF 50",
+    name: "واقي الشمس اليومي SPF 50",
+    nameEn: "Daily Sunscreen SPF 50",
     brand: "Lumière",
     category: "skincare",
     skinType: ["all"],
@@ -312,7 +327,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-003",
-    name: "Nude Block Heel Sandals",
+    name: "صندل نيود بكعب عريض",
+    nameEn: "Nude Block Heel Sandals",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -331,7 +347,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-004",
-    name: "Bow Pointed Pumps",
+    name: "حذاء كعب مدبب بفيونكة",
+    nameEn: "Bow Pointed Pumps",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -350,7 +367,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-005",
-    name: "Cognac Buckle Ankle Boots",
+    name: "بوت كونياك بإبزيم",
+    nameEn: "Cognac Buckle Ankle Boots",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -369,7 +387,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-006",
-    name: "Olive Ankle Strap Sandals",
+    name: "صندل زيتوني بحزام كاحل",
+    nameEn: "Olive Ankle Strap Sandals",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -388,7 +407,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-007",
-    name: "Fuchsia Platform Mules",
+    name: "ميول فوشيا بمنصة",
+    nameEn: "Fuchsia Platform Mules",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -407,7 +427,8 @@ export const mockProducts = [
   },
   {
     id: "shoe-008",
-    name: "Tan Slingback Heels",
+    name: "حذاء سلينج باك تان",
+    nameEn: "Tan Slingback Heels",
     brand: "Velora",
     category: "shoes",
     skinType: ["all"],
@@ -426,7 +447,8 @@ export const mockProducts = [
   },
   {
     id: "bag-003",
-    name: "Taupe Structured Tote",
+    name: "شنطة توت منظمة بيج",
+    nameEn: "Taupe Structured Tote",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -445,7 +467,8 @@ export const mockProducts = [
   },
   {
     id: "bag-004",
-    name: "Blush Structured Handbag",
+    name: "شنطة يد بينك منظمة",
+    nameEn: "Blush Structured Handbag",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -464,7 +487,8 @@ export const mockProducts = [
   },
   {
     id: "bag-005",
-    name: "Black Dome Handbag",
+    name: "شنطة يد سوداء كلاسيك",
+    nameEn: "Black Dome Handbag",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -483,7 +507,8 @@ export const mockProducts = [
   },
   {
     id: "bag-006",
-    name: "Black Slouchy Shoulder Bag",
+    name: "شنطة كتف سوداء واسعة",
+    nameEn: "Black Slouchy Shoulder Bag",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -502,7 +527,8 @@ export const mockProducts = [
   },
   {
     id: "bag-007",
-    name: "Caramel Buckle Clutch",
+    name: "كلتش كراميل بإبزيم",
+    nameEn: "Caramel Buckle Clutch",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -521,7 +547,8 @@ export const mockProducts = [
   },
   {
     id: "bag-008",
-    name: "Pink Phone Crossbody",
+    name: "كروس بينك للموبايل",
+    nameEn: "Pink Phone Crossbody",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],
@@ -540,7 +567,8 @@ export const mockProducts = [
   },
   {
     id: "bag-009",
-    name: "Cognac Leather Crossbody",
+    name: "كروس جلد كونياك",
+    nameEn: "Cognac Leather Crossbody",
     brand: "Velora",
     category: "bags",
     skinType: ["all"],

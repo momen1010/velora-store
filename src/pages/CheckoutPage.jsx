@@ -1,11 +1,12 @@
 // src/pages/CheckoutPage.jsx  →  المسار: /checkout
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Banknote, CreditCard, Loader2, Sparkles } from "lucide-react";
+import { Banknote, CreditCard, Loader2, Smartphone, Sparkles } from "lucide-react";
 import PageShell from "../components/layout/PageShell";
 import { formatPrice } from "../components/catalog/catalogConfig";
 import { useCart } from "../context/CartContext";
 import { createOrder } from "../services/orderService";
+import { WALLET_NUMBER, WALLET_NAME } from "../config/store";
 
 const GOVERNORATES = [
   "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية", "الدقهلية", "البحيرة", "المنوفية", "الغربية",
@@ -13,7 +14,7 @@ const GOVERNORATES = [
   "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان", "البحر الأحمر", "الوادي الجديد", "مطروح",
 ];
 
-const EMPTY_FORM = { name: "", phone: "", governorate: "", city: "", address: "", notes: "" };
+const EMPTY_FORM = { name: "", phone: "", governorate: "", city: "", address: "", notes: "", walletSender: "" };
 
 // يحوّل الأرقام العربية إلى إنجليزية ويقبل +20 أو 0020 أو مسافات
 const normalizePhone = (raw) =>
@@ -22,8 +23,9 @@ const normalizePhone = (raw) =>
     .replace(/[\s\-()]/g, "")
     .replace(/^(\+20|0020)/, "0");
 
-const validate = (f) => {
+const validate = (f, method = "cod") => {
   const e = {};
+  if (method === "wallet" && !/^01[0125]\d{8}$/.test(normalizePhone(f.walletSender))) e.walletSender = "اكتب رقم المحفظة اللي هتحوّل منها (11 رقم)";
   if (f.name.trim().length < 3) e.name = "اكتب الاسم الكامل (3 أحرف على الأقل)";
   if (!/^01[0125]\d{8}$/.test(normalizePhone(f.phone))) e.phone = "اكتب رقم موبايل مصري صحيح، مثل 01012345678";
   if (!f.governorate) e.governorate = "اختر المحافظة";
@@ -58,6 +60,8 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [method, setMethod] = useState("cod");
+  const [copied, setCopied] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
@@ -67,9 +71,9 @@ export default function CheckoutPage() {
   const setField = (key) => (e) => {
     const next = { ...form, [key]: e.target.value };
     setForm(next);
-    if (submitted) setErrors(validate(next)); // بعد أول محاولة نصحّح الأخطاء لحظياً
+    if (submitted) setErrors(validate(next, method)); // بعد أول محاولة نصحّح الأخطاء لحظياً
   };
-  const blurField = (key) => () => setErrors((prev) => ({ ...prev, [key]: validate(form)[key] }));
+  const blurField = (key) => () => setErrors((prev) => ({ ...prev, [key]: validate(form, method)[key] }));
 
   const fieldProps = (key) => ({
     id: `f-${key}`,
@@ -86,7 +90,7 @@ export default function CheckoutPage() {
     if (submitting) return; // يمنع الإرسال المزدوج
     setSubmitted(true);
 
-    const errs = validate(form);
+    const errs = validate(form, method);
     setErrors(errs);
     const firstKey = Object.keys(errs)[0];
     if (firstKey) {
@@ -107,7 +111,8 @@ export default function CheckoutPage() {
           notes: form.notes.trim(),
         },
         items: cart,
-        paymentMethod: "cod",
+        paymentMethod: method,
+        walletSender: method === "wallet" ? normalizePhone(form.walletSender) : "",
       });
       navigate(`/order/${order.id}`, { replace: true });
       clearCart();
@@ -178,14 +183,48 @@ export default function CheckoutPage() {
           <fieldset className="rounded-3xl border border-[#F3D5DD] bg-white p-5 md:p-6">
             <legend className="px-2 text-lg font-bold">طريقة الدفع</legend>
             <div className="mt-2 space-y-3">
-              <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-[#C2557A] bg-[#FFF9FA] p-4">
-                <input type="radio" name="payment" value="cod" checked readOnly className="h-4 w-4 accent-[#C2557A]" />
+              <label className={`flex cursor-pointer items-center gap-3 rounded-2xl p-4 ${method === "cod" ? "border-2 border-[#C2557A] bg-[#FFF9FA]" : "border border-[#F3D5DD]"}`}>
+                <input type="radio" name="payment" value="cod" checked={method === "cod"} onChange={() => setMethod("cod")} className="h-4 w-4 accent-[#C2557A]" />
                 <Banknote className="h-5 w-5 text-[#C2557A]" aria-hidden="true" />
                 <span className="flex-1">
                   <span className="block font-medium">الدفع عند الاستلام</span>
                   <span className="block text-xs text-[#8C6F7B]">ادفع نقداً للمندوب عند وصول طلبك</span>
                 </span>
               </label>
+              {WALLET_NUMBER && (
+                <div className={`rounded-2xl p-4 ${method === "wallet" ? "border-2 border-[#C2557A] bg-[#FFF9FA]" : "border border-[#F3D5DD]"}`}>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input type="radio" name="payment" value="wallet" checked={method === "wallet"} onChange={() => setMethod("wallet")} className="h-4 w-4 accent-[#C2557A]" />
+                    <Smartphone className="h-5 w-5 text-[#C2557A]" aria-hidden="true" />
+                    <span className="flex-1">
+                      <span className="block font-medium">تحويل على محفظة {WALLET_NAME}</span>
+                      <span className="block text-xs text-[#8C6F7B]">حوّل المبلغ وهنأكد طلبك بعد وصول التحويل</span>
+                    </span>
+                  </label>
+                  {method === "wallet" && (
+                    <div className="mt-4 space-y-4 border-t border-[#F3D5DD] pt-4 text-sm">
+                      <ol className="list-decimal space-y-1 ps-5 text-[#4A2C3A]">
+                        <li>حوّل <b>{formatPrice(total)}</b> على رقم المحفظة:</li>
+                      </ol>
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-[#F3D5DD]">
+                        <span dir="ltr" className="text-lg font-bold tracking-wider">{WALLET_NUMBER}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(WALLET_NUMBER).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => {});
+                          }}
+                          className="rounded-full bg-[#4A2C3A] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#C2557A]"
+                        >
+                          {copied ? "تم النسخ" : "نسخ الرقم"}
+                        </button>
+                      </div>
+                      <Field id="f-walletSender" label="رقم المحفظة اللي حوّلت منها" error={errors.walletSender} hint="عشان نطابق التحويل مع طلبك">
+                        <input type="tel" inputMode="tel" dir="ltr" placeholder="01xxxxxxxxx" {...fieldProps("walletSender")} className={`${inputCls(errors.walletSender)} text-end`} />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+              )}
               <label className="flex cursor-not-allowed items-center gap-3 rounded-2xl border border-[#F3D5DD] p-4 opacity-60">
                 <input type="radio" name="payment" value="card" disabled className="h-4 w-4" />
                 <CreditCard className="h-5 w-5" aria-hidden="true" />
@@ -236,7 +275,7 @@ export default function CheckoutPage() {
           >
             {submitting ? (<><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />جارٍ تأكيد الطلب...</>) : `تأكيد الطلب · ${formatPrice(total)}`}
           </button>
-          <p className="mt-3 text-center text-xs text-[#8C6F7B]">بتأكيد الطلب ستدفع {formatPrice(total)} نقداً عند الاستلام</p>
+          <p className="mt-3 text-center text-xs text-[#8C6F7B]">{method === "wallet" ? `حوّل ${formatPrice(total)} على المحفظة وهنأكد الطلب بعد وصول التحويل` : `بتأكيد الطلب ستدفع ${formatPrice(total)} نقداً عند الاستلام`}</p>
           <Link to="/" className="mt-3 block text-center text-sm text-[#8C6F7B] hover:text-[#C2557A]">متابعة التسوق</Link>
         </aside>
       </form>

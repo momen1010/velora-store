@@ -40,4 +40,10 @@ for(const [k,[c,i,d]] of Object.entries(bads)) await t("reject "+k, assertFails(
 const many=Array.from({length:5},(_,i)=>item({cartItemId:"c"+i,price:10,quantity:1}));
 await t("6 lines ok", assertSucceeds(setDoc(doc(anon,"orders","GLW-AAAAAAAAB5"),order({items:many}))));
 await t("7 lines rejected", assertFails(setDoc(doc(anon,"orders","GLW-AAAAAAAAB6"),order({items:[...many,item({cartItemId:"q"})]}))));
+await t("wallet order ok", assertSucceeds(setDoc(doc(anon,"orders","GLW-WALLET0001"),order({paymentMethod:"wallet",walletSender:"01112345678"}))));
+await t("reject wallet without sender", assertFails(setDoc(doc(anon,"orders","GLW-WALLET0002"),order({paymentMethod:"wallet"}))));
+await t("reject wallet bad sender", assertFails(setDoc(doc(anon,"orders","GLW-WALLET0003"),order({paymentMethod:"wallet",walletSender:"123"}))));
+await t("reject cod with walletSender", assertFails(setDoc(doc(anon,"orders","GLW-WALLET0004"),order({walletSender:"01112345678"}))));
+await t("reject wallet bad total", assertFails(setDoc(doc(anon,"orders","GLW-WALLET0005"),order({paymentMethod:"wallet",walletSender:"01112345678",total:1}))));
+await t("wallet 5 lines ok", assertSucceeds(setDoc(doc(anon,"orders","GLW-WALLET0006"),order({paymentMethod:"wallet",walletSender:"01112345678",items:many}))));
 await env.cleanup(); console.log(bad?`${bad} FAILED`:"ALL PASSED"); process.exit(bad?1:0);

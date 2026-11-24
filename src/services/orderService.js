@@ -42,7 +42,7 @@ const withTimeout = (promise, ms) =>
  * ينشئ الطلب ويحسب الإجماليات من العناصر نفسها ثم يحفظه في Firestore.
  * @param {{ customer: object, items: object[], paymentMethod?: string }} payload
  */
-export async function createOrder({ customer, items, paymentMethod = "cod" }) {
+export async function createOrder({ customer, items, paymentMethod = "cod", walletSender = "" }) {
   if (!Array.isArray(items) || items.length === 0) throw new Error("السلة فارغة");
   if (items.length > MAX_CART_LINES) {
     throw Object.assign(new Error("too many lines"), {
@@ -50,7 +50,10 @@ export async function createOrder({ customer, items, paymentMethod = "cod" }) {
     });
   }
   if (!customer) throw new Error("بيانات العميل ناقصة");
-  if (paymentMethod !== "cod") throw new Error("طريقة دفع غير مدعومة");
+  if (paymentMethod !== "cod" && paymentMethod !== "wallet") throw new Error("طريقة دفع غير مدعومة");
+  if (paymentMethod === "wallet" && !/^01[0125]\d{8}$/.test(String(walletSender))) {
+    throw Object.assign(new Error("invalid wallet sender"), { userMessage: "اكتب رقم المحفظة اللي حوّلت منها (11 رقم)." });
+  }
   if (!isFirebaseConfigured || !db) throw new Error("Firebase غير مُعدّ");
 
   const orderItems = items.map((i) => ({
@@ -86,6 +89,7 @@ export async function createOrder({ customer, items, paymentMethod = "cod" }) {
     subtotal,
     shipping,
     total: round2(subtotal + shipping),
+    ...(paymentMethod === "wallet" ? { walletSender: String(walletSender) } : {}),
   };
 
   try {

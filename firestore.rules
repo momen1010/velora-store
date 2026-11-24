@@ -54,10 +54,13 @@ service cloud.firestore {
     }
 
     function validNewOrder(orderId, d) {
-      return d.keys().hasOnly(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt'])
+      return d.keys().hasOnly(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt', 'walletSender'])
         && d.keys().hasAll(['paymentMethod', 'status', 'customer', 'items', 'subtotal', 'shipping', 'total', 'createdAt'])
         && orderId.matches('^GLW-[0-9A-Z]{10}$')
-        && d.paymentMethod == 'cod'
+        // الدفع: عند الاستلام، أو تحويل على محفظة (مع رقم المحفظة اللي حوّل منها العميل)
+        && ((d.paymentMethod == 'cod' && !('walletSender' in d))
+          || (d.paymentMethod == 'wallet' && 'walletSender' in d && isStr(d.walletSender, 11, 11)
+              && d.walletSender.matches('^01[0125][0-9]{8}$')))
         && d.status == 'pending'
         && d.createdAt == request.time
         && validCustomer(d.customer)

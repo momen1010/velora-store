@@ -1,11 +1,11 @@
 // زرار واتساب عائم. يظهر فقط لو الرقم متحدد في VITE_WHATSAPP_NUMBER
 // (بالصيغة الدولية بدون + أو أصفار، مثال: 201012345678).
-const raw = import.meta.env.VITE_WHATSAPP_NUMBER || "";
-const NUMBER = raw.replace(/\D/g, "");
+import { WHATSAPP_NUMBER as NUMBER } from "../../config/store";
+
 const MESSAGE = "أهلاً Velora، عندي استفسار.";
 
 export default function WhatsAppButton() {
-  if (NUMBER.length < 10) return null;
+  if (!NUMBER) return null;
   const href = `https://wa.me/${NUMBER}?text=${encodeURIComponent(MESSAGE)}`;
   return (
     <a

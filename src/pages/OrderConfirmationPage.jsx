@@ -1,10 +1,12 @@
 // src/pages/OrderConfirmationPage.jsx  →  المسار: /order/:orderId
 import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Banknote, CheckCircle2, MapPin, Sparkles } from "lucide-react";
+import { Banknote, CheckCircle2, MapPin, MessageCircle, Smartphone, Sparkles } from "lucide-react";
 import PageShell from "../components/layout/PageShell";
 import { formatPrice } from "../components/catalog/catalogConfig";
 import { getOrderById } from "../services/orderService";
+import { WALLET_NUMBER, WALLET_NAME } from "../config/store";
+import { buildOrderMessage, whatsappLink } from "../utils/whatsapp";
 
 import useDocumentTitle from "../utils/useDocumentTitle";
 
@@ -30,6 +32,8 @@ export default function OrderConfirmationPage() {
   }
 
   const { customer } = order;
+  const isWallet = order.paymentMethod === "wallet";
+  const waHref = whatsappLink(buildOrderMessage(order, { walletNumber: WALLET_NUMBER, walletName: WALLET_NAME }));
   const date = new Date(order.createdAt).toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -56,9 +60,24 @@ export default function OrderConfirmationPage() {
           {customer.notes && <p className="mt-2 text-xs text-[#8C6F7B]">ملاحظات: {customer.notes}</p>}
         </section>
         <section className="rounded-3xl border border-[#F3D5DD] bg-white p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-bold"><Banknote className="h-4 w-4 text-[#C2557A]" aria-hidden="true" />الدفع</h2>
-          <p className="text-sm font-medium">الدفع عند الاستلام</p>
-          <p className="mt-1 text-sm text-[#8C6F7B]">جهّز مبلغ <b className="text-[#4A2C3A]">{formatPrice(order.total)}</b> للمندوب</p>
+          <h2 className="mb-3 flex items-center gap-2 font-bold">
+            {isWallet ? <Smartphone className="h-4 w-4 text-[#C2557A]" aria-hidden="true" /> : <Banknote className="h-4 w-4 text-[#C2557A]" aria-hidden="true" />}الدفع
+          </h2>
+          {isWallet ? (
+            <>
+              <p className="text-sm font-medium">تحويل على محفظة {WALLET_NAME} (في انتظار التأكيد)</p>
+              <p className="mt-1 text-sm text-[#8C6F7B]">
+                لو لسه محوّلتش، حوّل <b className="text-[#4A2C3A]">{formatPrice(order.total)}</b>
+                {WALLET_NUMBER && <> على <span dir="ltr" className="font-bold text-[#4A2C3A]">{WALLET_NUMBER}</span></>}.
+                هنأكد طلبك بعد وصول التحويل من رقم <span dir="ltr">{order.walletSender}</span>.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-medium">الدفع عند الاستلام</p>
+              <p className="mt-1 text-sm text-[#8C6F7B]">جهّز مبلغ <b className="text-[#4A2C3A]">{formatPrice(order.total)}</b> للمندوب</p>
+            </>
+          )}
         </section>
       </div>
 
@@ -84,6 +103,21 @@ export default function OrderConfirmationPage() {
           <div className="flex justify-between border-t border-[#F3D5DD] pt-3 text-base font-bold"><dt>الإجمالي</dt><dd>{formatPrice(order.total)}</dd></div>
         </dl>
       </section>
+
+      {waHref && (
+        <div className="mt-6 rounded-3xl border border-[#BFE8CF] bg-[#F1FBF5] p-5 text-center">
+          <p className="mb-3 text-sm text-[#4A2C3A]">عشان نسرّع تجهيز طلبك، ابعت تفاصيله لينا على واتساب (الرسالة جاهزة، اضغط إرسال بس).</p>
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-[#25D366] px-8 text-sm font-bold text-white shadow hover:brightness-95"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+            أرسل الطلب على واتساب
+          </a>
+        </div>
+      )}
 
       <div className="mt-8 text-center">
         <Link to="/" className="inline-flex h-12 items-center rounded-full bg-[#4A2C3A] px-10 text-sm font-bold text-white hover:bg-[#C2557A]">متابعة التسوق</Link>

@@ -46,8 +46,8 @@ if (isFirebaseConfigured) {
   db = getFirestore(app);
   auth = getAuth(app);
 
-  // للاختبار المحلي فقط (npm run dev مع VITE_USE_EMULATOR=1): لا يؤثر على الإنتاج
-  if (env.DEV && env.VITE_USE_EMULATOR) {
+  // للاختبار المحلي فقط (VITE_USE_EMULATOR=1 وقت البناء، غير مستخدم في الإنتاج): لا يؤثر على الإنتاج
+  if (env.VITE_USE_EMULATOR) {
     connectFirestoreEmulator(db, "127.0.0.1", Number(env.VITE_FIRESTORE_EMULATOR_PORT || 8099));
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
   }

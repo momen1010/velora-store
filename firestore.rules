@@ -16,7 +16,15 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-        && adminDoc().active == true;
+        && adminDoc().active == true
+        && adminDoc().role in ['owner', 'manager', 'staff'];
+    }
+    // حساب خدمي لدالة إشعار الطلبات (api/notify-order): يقرأ طلباً واحداً بمعرّفه ويسجّل أنه أُرسل إشعاره. لا يملك أي صلاحية أخرى.
+    function isNotifier() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && adminDoc().active == true
+        && adminDoc().role == 'notifier';
     }
     function isManager() { return isAdmin() && adminDoc().role in ['owner', 'manager']; }
     function isOwner() { return isAdmin() && adminDoc().role == 'owner'; }
@@ -138,7 +146,8 @@ service cloud.firestore {
       // الزائر: إنشاء طلب صالح فقط. ممنوع get/list/update/delete.
       allow create: if validNewOrder(orderId, request.resource.data);
 
-      allow get, list: if isAdmin();
+      allow get: if isAdmin() || isNotifier();
+      allow list: if isAdmin();
 
       // الأدمن: الحالة، حالة الدفع، الملاحظات الداخلية، السجل. لا تعديل على العميل أو الأصناف أو المبالغ.
       allow update: if isAdmin()
@@ -285,13 +294,23 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // علامة «تم إرسال الإشعار» لكل طلب: إنشاء مرة واحدة فقط (يمنع التكرار)، وحذفها فقط لو فشل الإرسال لتُعاد المحاولة
+    match /orderNotifications/{orderId} {
+      allow create: if isNotifier()
+        && request.resource.data.keys().hasOnly(['orderId'])
+        && request.resource.data.orderId == orderId;
+      allow delete: if isNotifier();
+      allow get, list: if isAdmin();
+      allow update: if false;
+    }
+
     // ───────────── الأدمن ─────────────
     match /admins/{uid} {
       allow get: if request.auth != null && (request.auth.uid == uid || isOwner());
       allow list: if isOwner();
       allow create, update: if isOwner()
         && request.resource.data.keys().hasOnly(['email', 'role', 'active', 'createdAt', 'updatedAt'])
-        && request.resource.data.role in ['owner', 'manager', 'staff']
+        && request.resource.data.role in ['owner', 'manager', 'staff', 'notifier']
         && request.resource.data.active is bool;
       allow delete: if false;
     }

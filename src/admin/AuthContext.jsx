@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
       if (!user) { setState({ loading: false, user: null, admin: null }); return; }
       try {
         const snap = await getDoc(doc(db, "admins", user.uid));
-        if (!snap.exists() || snap.data().active !== true) {
+        if (!snap.exists() || snap.data().active !== true || !["owner", "manager", "staff"].includes(snap.data().role)) {
           setNotice("هذا الحساب ليس له صلاحية دخول للوحة الإدارة.");
           await signOut(auth);
           return;

@@ -149,6 +149,15 @@ export default function CheckoutPage() {
         paymentMethod: method,
         walletSender: method === "wallet" ? normalizePhone(form.walletSender) : "",
       });
+      // إشعار تليجرام لصاحب المتجر (محاولة واحدة في الخلفية؛ فشلها لا يؤثر على الطلب)
+      try {
+        fetch("/api/notify-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: order.id }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch { /* ignore */ }
       navigate(`/order/${order.id}`, { replace: true });
       clearCart();
     } catch (err) {

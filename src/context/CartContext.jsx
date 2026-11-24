@@ -56,8 +56,12 @@ const sanitizeWishlist = (data) =>
     : [];
 
 // المنتج + الدرجة = عنصر فريد في السلة
-export const buildCartItemId = (productId, shade) =>
-  `${productId}__${shade?.name ?? "default"}`;
+// المقاس (لو موجود) جزء من المعرّف عشان مقاسين مختلفين يبقوا سطرين منفصلين،
+// وعشان يظهر في الطلب (cartItemId محفوظ في Firestore).
+export const buildCartItemId = (productId, shade, size) => {
+  const safeSize = size ? String(size).replace(/[^\w\u0600-\u06FF.-]/g, "").slice(0, 20) : "";
+  return `${productId}__${shade?.name ?? "default"}${safeSize ? `__${safeSize}` : ""}`.slice(0, 100);
+};
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -100,19 +104,21 @@ export function CartProvider({ children }) {
 
   /* ── إجراءات السلة ── */
   const addToCart = useCallback(
-    (product, selectedShade = null, quantity = 1) => {
+    // الترتيب: (المنتج، الكمية، الدرجة، المقاس) وهو نفس ترتيب كل الاستدعاءات في الصفحات
+    (product, quantity = 1, selectedShade = null, selectedSize = null) => {
+      const qty = Number.isInteger(quantity) && quantity > 0 ? Math.min(quantity, MAX_ITEM_QTY) : 1;
       if (!product || product.id == null || !Number.isFinite(product.price)) {
         console.error("[Cart] addToCart: منتج غير صالح", product);
         return;
       }
-      const cartItemId = buildCartItemId(product.id, selectedShade);
+      const cartItemId = buildCartItemId(product.id, selectedShade, selectedSize);
 
       setCart((prev) => {
         const existing = prev.find((i) => i.cartItemId === cartItemId);
         if (existing) {
           return prev.map((i) =>
             i.cartItemId === cartItemId
-              ? { ...i, quantity: Math.min(i.quantity + quantity, MAX_ITEM_QTY) }
+              ? { ...i, quantity: Math.min(i.quantity + qty, MAX_ITEM_QTY) }
               : i
           );
         }
@@ -129,7 +135,7 @@ export function CartProvider({ children }) {
             price: product.price,
             oldPrice: product.oldPrice ?? null,
             shade: selectedShade ? { name: selectedShade.name, hex: selectedShade.hex } : null,
-            quantity: Math.min(quantity, MAX_ITEM_QTY),
+            quantity: qty,
           },
         ];
       });

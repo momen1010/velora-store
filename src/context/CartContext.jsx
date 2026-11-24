@@ -220,10 +220,14 @@ export function CartProvider({ children }) {
 
   /* ── المفضلة ── */
   const toggleWishlist = useCallback(
-    (productId) =>
+    (productOrId) => {
+      // بعض الصفحات تمرّر المنتج كاملاً وبعضها المعرّف؛ نخزّن المعرّف دائماً
+      const productId = productOrId && typeof productOrId === "object" ? productOrId.id : productOrId;
+      if (productId == null) return;
       setWishlist((prev) =>
         prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
-      ),
+      );
+    },
     []
   );
 

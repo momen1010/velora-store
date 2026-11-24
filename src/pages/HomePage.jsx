@@ -1,23 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Search,
-  UserRound,
-  Truck,
-  ShieldCheck,
-  Headset,
-  ArrowLeft,
-  Sparkles,
-  Menu,
-  X,
-} from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { Truck, Banknote, RotateCcw, Headset, ArrowLeft, Sparkles, MessageCircle } from "lucide-react";
 
 // ─── Cart (الموجود في مشروعك) ─────────────────────────────
 import { useCart, FREE_SHIPPING_THRESHOLD } from "../context/CartContext";
 import useDocumentTitle from "../utils/useDocumentTitle";
 
 // ─── Layout + Catalog ─────────────────────────────────────
-import { HeaderActions } from "../components/layout/SiteHeader";
+import SiteHeader from "../components/layout/SiteHeader";
+import { WHATSAPP_NUMBER, RETURN_DAYS } from "../config/store";
 import ProductCard from "../components/catalog/ProductCard";
 import { mockProducts } from "../components/catalog/mockProducts";
 import { formatPrice } from "../components/catalog/catalogConfig";
@@ -46,48 +36,10 @@ const ROUTES = {
    بيانات بطاقات الفئات — كل بطاقة لها رابطها الخاص
    ═══════════════════════════════════════════════════════════ */
 const categories = [
-  {
-  name: "الشنط",
-  subtitle: "أناقة تكمّل إطلالتك",
-  image: null,
-  color: "#E8E0D5", // لون بيج فخم
-  to: "/shop?category=bags",
-},
-{
-  name: "الأحذية",
-  subtitle: "خطوة بأسلوب مميز",
-  image: null,
-  color: "#D5C9C1", // لون رمادي دافئ
-  to: "/shop?category=shoes",
-},
-  {
-    name: "العناية بالبشرة",
-    subtitle: "بشرة صحية ومشرقة",
-    image: "/images/hydra-dew-gel-moisturizer.jpg",
-    color: "#F7D4DC",
-    to: ROUTES.skincare, // ← يذهب لقسم العناية بالبشرة
-  },
-  {
-    name: "المكياج",
-    subtitle: "عبّري عن أسلوبك",
-    image: "/images/velvet-matte-lip-cream.jpg",
-    color: "#F6C4D0",
-    to: ROUTES.makeup, // ← يذهب لقسم المكياج
-  },
- 
- 
-];
-
-/* ═══════════════════════════════════════════════════════════
-   روابط الناف بار — كل رابط له وجهة صحيحة
-   ═══════════════════════════════════════════════════════════ */
-const NAV_LINKS = [
-  { label: "المتجر", to: ROUTES.shop },
-  { label: "العناية بالبشرة", to: ROUTES.skincare },
-  { label: "المكياج", to: ROUTES.makeup },
-  { label: "الشنط", to: "/shop?category=bags" },
-  { label: "الأحذية", to: "/shop?category=shoes" },
-  { label: "العروض", to: ROUTES.offers }, // ← فلتر العروض
+  { name: "العناية بالبشرة", subtitle: "بشرة صحية ومشرقة", image: "/images/rose-water-toner.webp", to: ROUTES.skincare },
+  { name: "المكياج", subtitle: "عبّري عن أسلوبك", image: "/images/velvet-matte-lip-cream.jpg", to: ROUTES.makeup },
+  { name: "الشنط", subtitle: "أناقة تكمّل إطلالتك", image: "/images/blush-structured-handbag.webp", to: "/shop?category=bags" },
+  { name: "الأحذية", subtitle: "خطوة بأسلوب مميز", image: "/images/fuchsia-platform-mules.webp", to: "/shop?category=shoes" },
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -111,108 +63,6 @@ function AnnouncementBar() {
         </span>
       </div>
     </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   HomeHeader
-   ═══════════════════════════════════════════════════════════ */
-function HomeHeader() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const closeMobile = useCallback(() => setMobileOpen(false), []);
-
-  return (
-    <header className="sticky top-0 z-40 border-b border-[#F3D5DD] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex min-h-[78px] max-w-[1500px] items-center justify-between gap-4 px-5 lg:px-10">
-        {/* Logo → الرئيسية */}
-         
-
-
-{/* ─── Logo ─── */}
-<Link
-  to={ROUTES.home}
-  onClick={closeMobile}
-  className="flex shrink-0 items-center transition hover:opacity-80"
-  aria-label="Velora - الصفحة الرئيسية"
->
-  <img
-  src="/velora-logo.png"
-  alt="Velora"
-  className="h-20 w-auto object-contain sm:h-24 lg:h-28"
-/>
-</Link>
-
-        {/* Desktop Nav */}
-        <nav
-          aria-label="التنقل الرئيسي"
-          className="hidden items-center gap-8 text-sm font-medium text-[#21171B] lg:flex"
-        >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              className="inline-flex items-center gap-0.5 transition hover:text-[#E83E78]"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Actions */}
-        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-          <Link
-            to={ROUTES.search}
-            aria-label="البحث عن المنتجات"
-            className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-pink-50"
-          >
-            <Search className="h-6 w-6" />
-          </Link>
-
-          <HeaderActions />
-
-          <button
-            type="button"
-            aria-label="حساب المستخدم"
-            className="hidden h-10 w-10 items-center justify-center rounded-full transition hover:bg-pink-50 sm:flex"
-          >
-            <UserRound className="h-6 w-6" />
-          </button>
-
-          {/* Mobile toggle */}
-          <button
-            type="button"
-            aria-label={mobileOpen ? "إغلاق القائمة" : "فتح القائمة"}
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-pink-50 lg:hidden"
-          >
-            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Drawer */}
-      {mobileOpen && (
-        <nav
-          aria-label="التنقل للجوال"
-          className="border-t border-[#F3D5DD] bg-white lg:hidden"
-        >
-          <ul className="mx-auto max-w-[1500px] px-5 py-3">
-            {NAV_LINKS.map((link) => (
-              <li key={link.label}>
-                <Link
-                  to={link.to}
-                  onClick={closeMobile}
-                  className="block rounded-lg px-3 py-3 text-sm font-medium text-[#21171B] transition hover:bg-pink-50 hover:text-[#E83E78]"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
-    </header>
   );
 }
 
@@ -247,35 +97,10 @@ function HeroSection() {
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
 
-          {/* Trust Indicators */}
-          <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-5 text-sm text-[#26191E]">
-            <div className="flex items-center gap-3">
-              <Truck className="h-8 w-8 shrink-0" aria-hidden="true" />
-              <span>
-                شحن مجاني
-                <br />
-                فوق {formatPrice(FREE_SHIPPING_THRESHOLD)}
-              </span>
-            </div>
-            <div className="hidden h-9 w-px bg-[#B76C85] sm:block" aria-hidden="true" />
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-8 w-8 shrink-0" aria-hidden="true" />
-              <span>
-                الدفع عند
-                <br />
-                الاستلام
-              </span>
-            </div>
-            <div className="hidden h-9 w-px bg-[#B76C85] sm:block" aria-hidden="true" />
-            <div className="flex items-center gap-3">
-              <Headset className="h-8 w-8 shrink-0" aria-hidden="true" />
-              <span>
-                توصيل لكل
-                <br />
-                المحافظات
-              </span>
-            </div>
-          </div>
+          <p className="mt-8 inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-2.5 text-sm font-bold text-[#781D3B] shadow-sm">
+            <Truck className="h-5 w-5" aria-hidden="true" />
+            شحن مجاني للطلبات فوق {formatPrice(FREE_SHIPPING_THRESHOLD)} · الدفع عند الاستلام
+          </p>
         </div>
 
         <div className="relative">
@@ -296,44 +121,65 @@ function HeroSection() {
 /* ═══════════════════════════════════════════════════════════
    CategorySection — كل بطاقة تذهب لفئتها
    ═══════════════════════════════════════════════════════════ */
+function TrustStrip() {
+  const items = [
+    { Icon: Truck, title: "توصيل لكل المحافظات", text: `شحن مجاني فوق ${formatPrice(FREE_SHIPPING_THRESHOLD)}` },
+    { Icon: Banknote, title: "الدفع عند الاستلام", text: "ادفعي لمندوب الشحن بعد المعاينة" },
+    { Icon: RotateCcw, title: "استرجاع واستبدال", text: `خلال ${RETURN_DAYS} يوم من الاستلام` },
+    { Icon: Headset, title: "دعم على واتساب", text: "بنرد عليكي بشكل مباشر" },
+  ];
+  return (
+    <section aria-label="مميزات المتجر" className="border-b border-[#F3D5DD] bg-white">
+      <ul className="mx-auto grid max-w-[1500px] grid-cols-2 gap-y-6 px-5 py-7 lg:grid-cols-4 lg:px-10">
+        {items.map(({ Icon, title, text }) => (
+          <li key={title} className="flex items-center gap-3 pe-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FBE4EA] text-[#C2557A]">
+              <Icon className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block text-sm font-bold text-[#4A2C3A]">{title}</span>
+              <span className="block text-xs leading-5 text-[#8C6F7B]">{text}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SectionTitle({ id, title, subtitle }) {
+  return (
+    <div className="mb-9 flex items-center justify-center gap-6 text-center">
+      <span className="hidden h-px w-24 bg-[#E83E78]/60 sm:block" aria-hidden="true" />
+      <div>
+        <h2 id={id} className="text-3xl font-bold text-[#4A2C3A] sm:text-4xl">{title}</h2>
+        {subtitle && <p className="mt-2 text-sm text-[#8C6F7B] sm:text-base">{subtitle}</p>}
+      </div>
+      <span className="hidden h-px w-24 bg-[#E83E78]/60 sm:block" aria-hidden="true" />
+    </div>
+  );
+}
+
 function CategorySection() {
   return (
-    <section
-      aria-label="تسوقي حسب الفئة"
-      className="mx-auto max-w-[1500px] px-5 py-7 lg:px-10"
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {categories.map((category) => (
+    <section aria-labelledby="cat-h" className="mx-auto max-w-[1500px] px-5 pb-6 pt-14 lg:px-10">
+      <SectionTitle id="cat-h" title="تسوّقي حسب الفئة" subtitle="كل اللي تحتاجيه في مكان واحد" />
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        {categories.map((c) => (
           <Link
-            key={category.name}
-            to={category.to}
-            aria-label={`تسوقي ${category.name}`}
-            className="group relative flex min-h-[190px] items-center overflow-hidden rounded-2xl p-6 transition duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#E83E78] focus:ring-offset-2"
-            style={{ backgroundColor: category.color }}
+            key={c.name}
+            to={c.to}
+            aria-label={`تسوقي ${c.name}`}
+            className="group relative block aspect-[4/5] overflow-hidden rounded-2xl bg-[#FBE4EA] outline-none focus-visible:ring-2 focus-visible:ring-[#E83E78] focus-visible:ring-offset-2"
           >
-            {category.image ? (
-              <img
-                src={category.image}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                className="absolute inset-y-0 end-0 h-full w-[55%] object-contain transition duration-500 group-hover:scale-110"
-              />
-            ) : (
-              <Sparkles
-                className="absolute end-8 h-24 w-24 text-white/60 transition duration-500 group-hover:scale-110"
-                aria-hidden="true"
-              />
-            )}
-
-            <div className="relative z-10 max-w-[65%]">
-              <h2 className="text-3xl font-bold text-black">
-                {category.name}
-              </h2>
-              <p className="mt-1 text-sm text-black">{category.subtitle}</p>
-              <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/40 px-4 py-2 text-sm font-semibold text-black transition group-hover:bg-white">
+            <img src={c.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#3A1A28]/80 via-[#3A1A28]/10 to-transparent" aria-hidden="true" />
+            <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6">
+              <h3 className="text-xl font-bold sm:text-2xl">{c.name}</h3>
+              <p className="mt-1 text-xs text-white/85 sm:text-sm">{c.subtitle}</p>
+              <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold sm:text-sm">
                 تسوّقي الآن
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" aria-hidden="true" />
               </span>
             </div>
           </Link>
@@ -343,75 +189,42 @@ function CategorySection() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   BestSellers
-   ═══════════════════════════════════════════════════════════ */
-function BestSellers() {
+function ProductRow({ id, title, subtitle, products, linkTo, linkLabel }) {
   const { cart = [], wishlist = [], addToCart, toggleWishlist } = useCart();
   const navigate = useNavigate();
-
-  const products = useMemo(
-    () =>
-      mockProducts
-        .filter((p) => p.badge === "الأكثر مبيعاً")
-        .sort((a, b) => b.rating - a.rating),
-    []
-  );
-
-  const isWishlisted = (productId) =>
-    Array.isArray(wishlist)
-      ? wishlist.includes?.(productId) ||
-        wishlist.some?.((p) => (p?.id ?? p) === productId)
-      : false;
-
-  const getCartQty = (productId) =>
-    (cart || [])
-      .filter((item) => (item?.product?.id ?? item?.id) === productId)
-      .reduce((total, item) => total + (item?.quantity || 0), 0);
-
+  const isWishlisted = (pid) => Array.isArray(wishlist) ? wishlist.includes?.(pid) || wishlist.some?.((p) => (p?.id ?? p) === pid) : false;
+  const qty = (pid) => (cart || []).filter((i) => (i?.product?.id ?? i?.id) === pid).reduce((t, i) => t + (i?.quantity || 0), 0);
+  if (products.length === 0) return null;
   return (
-    <section
-      aria-labelledby="best-sellers-heading"
-      className="mx-auto max-w-[1500px] px-5 pb-20 pt-7 lg:px-10"
-    >
-      <div className="mb-9 flex items-center justify-center gap-6 text-center">
-        <span className="hidden h-px w-24 bg-[#E83E78] sm:block" aria-hidden="true" />
-        <div>
-          <h2
-            id="best-sellers-heading"
-            className="text-4xl font-bold text-black sm:text-5xl"
-          >
-            الأكثر مبيعاً
-          </h2>
-          <p className="mt-2 text-sm text-[#5D424D] sm:text-base">
-            اختياراتنا الأكثر طلباً من عميلاتنا.
-          </p>
-        </div>
-        <span className="hidden h-px w-24 bg-[#E83E78] sm:block" aria-hidden="true" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+    <section aria-labelledby={id} className="mx-auto max-w-[1500px] px-5 pb-6 pt-14 lg:px-10">
+      <SectionTitle id={id} title={title} subtitle={subtitle} />
+      <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
         {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            cartQty={getCartQty(product.id)}
-            isWishlisted={isWishlisted(product.id)}
-            onAddToCart={addToCart}
-            onToggleWishlist={toggleWishlist}
-            onOpen={(p) => navigate(`/product/${p.id}`)}
-          />
+          <ProductCard key={product.id} product={product} cartQty={qty(product.id)} isWishlisted={isWishlisted(product.id)} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onOpen={(p) => navigate(`/product/${p.id}`)} />
         ))}
       </div>
+      {linkTo && (
+        <div className="mt-10 text-center">
+          <Link to={linkTo} className="inline-flex h-12 items-center justify-center rounded-full border border-[#E83E78] px-8 text-sm font-semibold text-[#C52E68] transition hover:bg-[#E83E78] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E83E78] focus:ring-offset-2">
+            {linkLabel}
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
 
-      {/* زر "عرض الكل" → صفحة الأكثر مبيعاً */}
-      <div className="mt-10 text-center">
-        <Link
-          to={ROUTES.bestSellers}
-          className="inline-flex h-12 items-center justify-center rounded-full border border-[#E83E78] px-8 text-sm font-semibold text-[#C52E68] transition hover:bg-[#E83E78] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E83E78] focus:ring-offset-2"
-        >
-          عرض كل المنتجات
-        </Link>
+function WhatsAppBand() {
+  if (!WHATSAPP_NUMBER) return null;
+  return (
+    <section aria-label="تواصل معنا" className="mx-auto max-w-[1500px] px-5 pb-6 pt-14 lg:px-10">
+      <div className="flex flex-col items-center gap-5 rounded-3xl bg-gradient-to-br from-[#781D3B] to-[#B03A66] px-6 py-12 text-center text-white sm:py-14">
+        <h2 className="text-2xl font-bold sm:text-3xl">محتارة تختاري؟ كلمينا وهنساعدك</h2>
+        <p className="max-w-xl text-sm leading-7 text-white/85 sm:text-base">ابعتيلنا على واتساب وهنرشحلك المنتج المناسب لبشرتك أو لإطلالتك ونجهّز طلبك.</p>
+        <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 items-center gap-2 rounded-full bg-[#1FAF5A] px-8 text-sm font-bold text-white transition hover:bg-[#188A47]">
+          <MessageCircle className="h-5 w-5" aria-hidden="true" />
+          ابدأي المحادثة على واتساب
+        </a>
       </div>
     </section>
   );
@@ -420,6 +233,9 @@ function BestSellers() {
 /* ═══════════════════════════════════════════════════════════
    HomePage
    ═══════════════════════════════════════════════════════════ */
+const newIn = mockProducts.filter((p) => p.badge === "جديد").slice(0, 4);
+const best = mockProducts.filter((p) => p.badge === "الأكثر مبيعاً").sort((a, b) => b.rating - a.rating).slice(0, 8);
+
 export default function HomePage() {
   useDocumentTitle("Velora | متجر العناية بالبشرة والمكياج");
   return (
@@ -428,11 +244,14 @@ export default function HomePage() {
       className="min-h-screen overflow-x-hidden bg-[#FFFAFB] font-['Tajawal',system-ui,sans-serif] text-[#171313]"
     >
       <AnnouncementBar />
-      <HomeHeader />
+      <SiteHeader />
       <main>
         <HeroSection />
+        <TrustStrip />
         <CategorySection />
-        <BestSellers />
+        <ProductRow id="new-h" title="وصل حديثاً" subtitle="أحدث إضافاتنا" products={newIn} linkTo={ROUTES.shop} linkLabel="شوفي كل المنتجات" />
+        <ProductRow id="best-h" title="الأكثر مبيعاً" subtitle="اختياراتنا الأكثر طلباً من عميلاتنا." products={best} linkTo={ROUTES.bestSellers} linkLabel="عرض الأكثر مبيعاً" />
+        <WhatsAppBand />
       </main>
 
     </div>

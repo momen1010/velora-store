@@ -1,8 +1,10 @@
 // src/pages/ProductPage.jsx
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Heart, ShoppingBag, ChevronLeft } from "lucide-react";
 import { SKIN_LABELS } from "../components/catalog/catalogConfig";
+import SiteHeader from "../components/layout/SiteHeader";
+import ProductCard from "../components/catalog/ProductCard";
 import { mockProducts } from "../components/catalog/mockProducts";
 import useDocumentTitle from "../utils/useDocumentTitle";
 import { useCart } from "../context/CartContext"; // أو useStore حسب مشروعك
@@ -11,6 +13,7 @@ import { formatPrice } from "../components/catalog/catalogConfig";
 export default function ProductPage() {
   const { id } = useParams();
   const { addToCart, wishlist = [], toggleWishlist } = useCart();
+  const navigate = useNavigate();
 
   const product = mockProducts.find((p) => String(p.id) === String(id));
   const [quantity, setQuantity] = useState(1);
@@ -37,8 +40,12 @@ export default function ProductPage() {
     addToCart(product, quantity, null, selectedSize);
   };
 
+  const related = mockProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 lg:px-10" dir="rtl">
+    <div dir="rtl" className="font-['Tajawal',system-ui,sans-serif]">
+    <SiteHeader />
+    <div className="mx-auto max-w-7xl px-4 py-8 lg:px-10">
       {/* Breadcrumb */}
       <div className="mb-8 flex items-center gap-2 text-sm text-gray-500">
         <Link to="/" className="hover:text-velora-pink">الرئيسية</Link>
@@ -171,6 +178,18 @@ export default function ProductPage() {
 
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section aria-labelledby="related-h" className="mt-16">
+          <h2 id="related-h" className="mb-6 text-2xl font-bold text-[#4A2C3A]">قد يعجبك أيضاً</h2>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
+            {related.map((r) => (
+              <ProductCard key={r.id} product={r} cartQty={0} isWishlisted={false} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onOpen={(x) => navigate(`/product/${x.id}`)} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
     </div>
   );
 }

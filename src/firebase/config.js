@@ -3,7 +3,8 @@
 // ملاحظة: مفتاح apiKey الخاص بتطبيقات الويب ليس سرّاً؛ الحماية الحقيقية
 // تأتي من firestore.rules ومن App Check. راجع README.
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
 
 const env = import.meta.env;
 
@@ -22,6 +23,7 @@ export const isFirebaseConfigured = Boolean(
 
 let app = null;
 let db = null;
+let auth = null;
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
@@ -42,6 +44,13 @@ if (isFirebaseConfigured) {
   }
 
   db = getFirestore(app);
+  auth = getAuth(app);
+
+  // للاختبار المحلي فقط (npm run dev مع VITE_USE_EMULATOR=1): لا يؤثر على الإنتاج
+  if (env.DEV && env.VITE_USE_EMULATOR) {
+    connectFirestoreEmulator(db, "127.0.0.1", Number(env.VITE_FIRESTORE_EMULATOR_PORT || 8099));
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  }
 }
 
-export { app, db };
+export { app, db, auth };

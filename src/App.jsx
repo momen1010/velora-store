@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import {
   BrowserRouter,
   Link,
@@ -22,6 +22,7 @@ import WishlistPage from "./pages/WishlistPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import SiteFooter from "./components/layout/SiteFooter";
 import { AboutPage, ShippingReturnsPage, PrivacyPage, ContactPage } from "./pages/InfoPages";
+const AdminApp = lazy(() => import("./admin/AdminApp"));
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 
 function ScrollToTop() {
@@ -88,6 +89,17 @@ function NotFound() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Routes>
+        <Route path="/admin/*" element={<Suspense fallback={null}><AdminApp /></Suspense>} />
+        <Route path="*" element={<Storefront />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function Storefront() {
+  return (
+    <>
       <CatalogProvider>
       <CartProvider>
         <ScrollToTop />
@@ -114,6 +126,6 @@ export default function App() {
         <GlobalCartDrawer />
       </CartProvider>
       </CatalogProvider>
-    </BrowserRouter>
+    </>
   );
 }

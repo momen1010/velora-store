@@ -32,6 +32,21 @@ const WA_STEPS = [
 const AR_NUMERALS = ["١", "٢", "٣"];
 const DETAIL_KEYS = ["name", "phone", "governorate", "city", "address"];
 
+// بيانات التوصيل تُحفظ على جهاز العميل فقط (localStorage) لتعبئة أسرع في الطلب القادم — لا تُرسل لأي جهة غير الطلب نفسه
+const DETAILS_STORAGE_KEY = "velora_checkout_details";
+const DETAIL_STORAGE_FIELDS = ["name", "phone", "governorate", "city", "address", "notes"];
+const loadSavedDetails = () => {
+  try {
+    const data = JSON.parse(localStorage.getItem(DETAILS_STORAGE_KEY) || "null");
+    if (!data || typeof data !== "object") return EMPTY_FORM;
+    const merged = { ...EMPTY_FORM };
+    for (const k of DETAIL_STORAGE_FIELDS) if (typeof data[k] === "string") merged[k] = data[k];
+    return merged;
+  } catch {
+    return EMPTY_FORM;
+  }
+};
+
 // يحوّل الأرقام العربية إلى إنجليزية ويقبل +20 أو 0020 أو مسافات
 const normalizePhone = (raw) =>
   raw
@@ -151,7 +166,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cart, subtotal, shipping, total, discount, promo, clearCart } = useCart();
   const { settings } = useCatalog();
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(loadSavedDetails);
   const [errors, setErrors] = useState({});
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -174,6 +189,15 @@ export default function CheckoutPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [stepId]);
+
+  // حفظ بيانات التوصيل محلياً على الجهاز مع كل تعديل
+  useEffect(() => {
+    try {
+      const saved = {};
+      for (const k of DETAIL_STORAGE_FIELDS) saved[k] = form[k];
+      localStorage.setItem(DETAILS_STORAGE_KEY, JSON.stringify(saved));
+    } catch { /* التخزين المحلي غير متاح (وضع خاص مثلاً) — لا مشكلة */ }
+  }, [form]);
 
   const setField = (key) => (e) => {
     const next = { ...form, [key]: e.target.value };
@@ -414,6 +438,7 @@ export default function CheckoutPage() {
                     </Field>
                   </div>
                 </div>
+                <p className="mt-4 text-xs text-[#8C6F7B]">نحفظ بيانات التوصيل على جهازك فقط، عشان تلاقيها جاهزة في طلبك القادم.</p>
                 <StepNav nextLabel={nextLabel} onNext={goNext} />
               </section>
             </>
@@ -426,11 +451,24 @@ export default function CheckoutPage() {
               <p className="mt-1 text-sm text-[#8C6F7B]">اختار طريقة الدفع المناسبة لك قبل تأكيد الطلب.</p>
               <div className="mt-4 space-y-3">
                 <label className={`flex cursor-pointer items-center gap-3 rounded-2xl p-4 ${method === "cod" ? "border-2 border-[#C2557A] bg-[#FFF9FA]" : "border border-[#F3D5DD]"}`}>
-                  <input type="radio" name="payment" value="cod" checked={method === "cod"} onChange={() => setMethod("cod")} className="h-4 w-4 accent-[#C2557A]" />
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="cod"
+                    checked={method === "cod"}
+                    onChange={() => setMethod("cod")}
+                    onClick={() => {
+                      // اختيار الدفع عند الاستلام ينقل للتأكيد مباشرة — لا يحتاج بيانات إضافية
+                      setMethod("cod");
+                      setErrors({});
+                      setStepId("confirm");
+                    }}
+                    className="h-4 w-4 accent-[#C2557A]"
+                  />
                   <Banknote className="h-5 w-5 text-[#C2557A]" aria-hidden="true" />
                   <span className="flex-1">
                     <span className="block font-medium">الدفع عند الاستلام</span>
-                    <span className="block text-xs text-[#8C6F7B]">ادفع نقداً للمندوب عند وصول طلبك</span>
+                    <span className="block text-xs text-[#8C6F7B]">ادفع نقداً للمندوب عند وصول طلبك — اضغط هنا للمتابعة مباشرة</span>
                   </span>
                 </label>
                 {WALLET_NUMBER && (

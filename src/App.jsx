@@ -13,6 +13,7 @@ import { CartProvider, useCart } from "./context/CartContext";
 import { CatalogProvider } from "./context/CatalogContext";
 import CartDrawer from "./components/cart/CartDrawer";
 import PageShell from "./components/layout/PageShell";
+import BlackFridayBanner from "./components/layout/BlackFridayBanner";
 import { HeaderActions } from "./components/layout/SiteHeader";
 
 import HomePage from "./pages/HomePage";
@@ -103,6 +104,7 @@ function Storefront() {
       <CatalogProvider>
       <CartProvider>
         <ScrollToTop />
+        <BlackFridayBanner />
 
         <Routes>
           <Route path="/" element={<HomePage />} />

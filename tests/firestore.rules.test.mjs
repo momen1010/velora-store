@@ -18,6 +18,8 @@ await env.withSecurityRulesDisabled(async c => {
   await setDoc(doc(db,"promotions/OLD"),{type:"percent",value:10,active:true,expiresAt:new Date("2020-01-01")});
   await setDoc(doc(db,"promotions/OFF"),{type:"fixed",value:20,active:false});
   await setDoc(doc(db,"promotions/FULL"),{type:"fixed",value:20,active:true,usageLimit:1,usedCount:1});
+  await setDoc(doc(db,"promotions/FUTURE"),{type:"percent",value:25,active:true,startsAt:Timestamp.fromMillis(Date.now()+86400000)});
+  await setDoc(doc(db,"promotions/LIVE25"),{type:"percent",value:25,active:true,startsAt:Timestamp.fromMillis(Date.now()-86400000)});
   await setDoc(doc(db,"categories/hid"),{name:"Hid",visible:false});
   await setDoc(doc(db,"categories/vis"),{name:"Vis",visible:true});
 });
@@ -49,6 +51,8 @@ await t("promo inactive", assertFails(setDoc(doc(anon,"orders","GLW-PROMO00003")
 await t("promo expired", assertFails(setDoc(doc(anon,"orders","GLW-PROMO00004"),order({promoCode:"OLD",discount:108,total:972}))));
 await t("promo usage exhausted", assertFails(setDoc(doc(anon,"orders","GLW-PROMO00005"),order({promoCode:"FULL",discount:20,total:1060}))));
 await t("promo unknown", assertFails(setDoc(doc(anon,"orders","GLW-PROMO00006"),order({promoCode:"NOPE",discount:20,total:1060}))));
+await t("promo not started yet", assertFails(setDoc(doc(anon,"orders","GLW-PROMO00008"),order({promoCode:"FUTURE",discount:270,total:810}))));
+await t("promo started ok", assertSucceeds(setDoc(doc(anon,"orders","GLW-PROMO00009"),order({promoCode:"LIVE25",discount:270,total:810}))));
 await t("discount without code", assertFails(setDoc(doc(anon,"orders","GLW-PROMO00007"),order({discount:100,total:980}))));
 await t("client price below real price", assertFails(setDoc(doc(anon,"orders","GLW-PRICE00001"),order({items:[item({price:1})]}))));
 await t("client price above real price", assertFails(setDoc(doc(anon,"orders","GLW-PRICE00002"),order({items:[item({price:600})]}))));
@@ -138,6 +142,7 @@ await t("anon cannot list promotions", assertFails(getDocs(collection(anon,"prom
 await t("anon get active promo", assertSucceeds(getDoc(doc(anon,"promotions/SAVE10"))));
 await t("anon cannot get inactive promo", assertFails(getDoc(doc(anon,"promotions/OFF"))));
 await t("manager creates promo", assertSucceeds((async()=>{const b=writeBatch(mgr);const [id,add]=logId(mgr,"mgr");add(b);b.set(doc(mgr,"promotions/NEW20"),{type:"percent",value:20,active:true,lastLogId:id,updatedAt:serverTimestamp()});return b.commit();})()));
+await t("manager creates promo with startsAt", assertSucceeds((async()=>{const b=writeBatch(mgr);const [id,add]=logId(mgr,"mgr");add(b);b.set(doc(mgr,"promotions/WINDOW"),{type:"percent",value:15,active:true,startsAt:Timestamp.fromMillis(Date.now()+3600000),lastLogId:id,updatedAt:serverTimestamp()});return b.commit();})()));
 await t("promo percent >100 rejected", assertFails((async()=>{const b=writeBatch(mgr);const [id,add]=logId(mgr,"mgr");add(b);b.set(doc(mgr,"promotions/BIG"),{type:"percent",value:150,active:true,lastLogId:id,updatedAt:serverTimestamp()});return b.commit();})()));
 await t("staff bumps promo usedCount by 1", assertSucceeds(batchUpd(stf,"stf",doc(stf,"promotions/SAVE10"),{usedCount:1})));
 await t("staff cannot bump by 2", assertFails(batchUpd(stf,"stf",doc(stf,"promotions/SAVE10"),{usedCount:3})));

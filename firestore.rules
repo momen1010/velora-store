@@ -79,6 +79,7 @@ service cloud.firestore {
     function promoOk(d) {
       let pr = get(/databases/$(database)/documents/promotions/$(d.promoCode)).data;
       return pr.active == true
+        && (pr.get('startsAt', null) == null || pr.get('startsAt', null) <= request.time)
         && (pr.get('expiresAt', null) == null || pr.get('expiresAt', null) > request.time)
         && d.subtotal >= pr.get('minOrder', 0)
         && (pr.get('usageLimit', 0) == 0 || pr.get('usedCount', 0) < pr.usageLimit)
@@ -242,7 +243,7 @@ service cloud.firestore {
         && freshLog(request.resource.data, resource.data);
       allow create, update: if isManager()
         && code.matches('^[A-Z0-9_-]{3,30}$')
-        && request.resource.data.keys().hasOnly(['type', 'value', 'minOrder', 'usageLimit', 'usedCount', 'expiresAt', 'active', 'description', 'createdAt', 'updatedAt', 'lastLogId'])
+        && request.resource.data.keys().hasOnly(['type', 'value', 'minOrder', 'usageLimit', 'usedCount', 'startsAt', 'expiresAt', 'active', 'description', 'createdAt', 'updatedAt', 'lastLogId'])
         && request.resource.data.type in ['percent', 'fixed']
         && isNum(request.resource.data.value) && request.resource.data.value > 0
         && (request.resource.data.type == 'fixed' || request.resource.data.value <= 100)

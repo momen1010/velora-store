@@ -209,6 +209,10 @@ export function CartProvider({ children }) {
       const d = snap.data();
       const expired = d.expiresAt && d.expiresAt.toMillis() < Date.now();
       if (d.active !== true || expired) return { ok: false, message: "كود الخصم منتهي" };
+      if (d.startsAt && d.startsAt.toMillis() > Date.now()) {
+        const when = d.startsAt.toDate().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long" });
+        return { ok: false, message: `هذا الكود يبدأ يوم ${when}` };
+      }
       if (d.usageLimit > 0 && (d.usedCount ?? 0) >= d.usageLimit) return { ok: false, message: "تم استهلاك هذا الكود" };
       setPromo({ code, type: d.type, value: d.value, minOrder: d.minOrder ?? 0 });
       return { ok: true };
